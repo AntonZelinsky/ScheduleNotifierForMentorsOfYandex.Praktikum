@@ -1,21 +1,28 @@
+import datetime
 import os
 
 import notion_client
-import datetime
 
 from helpers import Objectify, Expando
-NOTION_TOKEN = os.getenv('NOTION_TOKEN')
 
-NOTION_DATABASE_NAME = os.getenv('NOTION_DATABASE_NAME')
 
-notion = notion_client.Client(auth=NOTION_TOKEN)
+def create_client():
+    notion_token = os.getenv('NOTION_TOKEN')
+
+    client = notion_client.Client(auth=notion_token)
+
+    return client
 
 
 def get_user_data():
+    client = create_client()
+
+    notion_database_id = os.getenv('NOTION_DATABASE_ID')
+
     date = datetime.date.today().__str__()
-    response = notion.databases.query(
+    response = client.databases.query(
         **{
-            "database_id": NOTION_DATABASE_NAME,
+            "database_id": notion_database_id,
             "filter": {
                 "property": "Дата",
                 "date": {

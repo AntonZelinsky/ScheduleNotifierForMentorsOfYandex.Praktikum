@@ -9,16 +9,6 @@ from telegram.ext import Updater, CallbackContext
 
 import notion
 
-token = os.getenv('TELEGRAM_TOKEN')
-
-
-def callback_morning_remainder(context: CallbackContext):
-    user = notion.get_user_data()
-
-    context.bot.send_message(chat_id=user.telegram_id,
-                             text=f'Привет, {user.name}. Напоминаю, ты сегодня дежуришь.')
-    logging.info(f'{user.name} c id {user.telegram_id} получил уведомление о дежурстве')
-
 
 def start(update, context):
     context.bot.send_message(chat_id=update.effective_chat.id,
@@ -29,11 +19,35 @@ def start(update, context):
                  f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
 
 
+def callback_morning_remainder(context: CallbackContext):
+    user = notion.get_user_data()
+
+    context.bot.send_message(chat_id=user.telegram_id,
+                             text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n\n'
+                                  'Желаю хорошего дня!')
+    logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
+
+
+def callback_evening_remainder(context: CallbackContext):
+    user = notion.get_user_data()
+
+    context.bot.send_message(chat_id=user.telegram_id,
+                             text=f'Добрый вечер, {user.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n\n'
+                                  'Спокойной ночи!')
+    logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
+
+
 def init():
+    token = os.getenv('TELEGRAM_TOKEN')
     updater = Updater(token, use_context=True)
 
-    time = datetime.time(hour=9, minute=0, tzinfo=timezone("Europe/Warsaw"))
-    _job_daily = updater.job_queue.run_daily(callback_morning_remainder, time)
+    morning_remainder_hour = int(os.getenv('MORNING_REMAINDER_HOUR', int))
+    time = datetime.time(hour=morning_remainder_hour, tzinfo=timezone("Europe/Warsaw"))
+    updater.job_queue.run_daily(callback_morning_remainder, time)
+
+    evening_remainder_hour = int(os.getenv('EVENING_REMAINDER_HOUR', int))
+    time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Warsaw"))
+    updater.job_queue.run_daily(callback_evening_remainder, time)
 
     start_handler = CommandHandler('start', start)
     dispatcher = updater.dispatcher
