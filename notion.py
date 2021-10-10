@@ -20,12 +20,12 @@ def get_database_ids() -> list:
 
 def get_users_data() -> dict:
     raw_data = get_users_raw_data()
-    users_data = group_by_user_row_data(raw_data)
+    users_data = group_by_user_raw_data(raw_data)
     return users_data
 
 
 def get_users_raw_data() -> list:
-    """Получить всех дежурных во всех таблицах на сегодня."""
+    """Получить все дежурства во всех таблицах на сегодня."""
     client = create_client()
     date = datetime.date.today().__str__()
     users_raw_data = list()
@@ -69,9 +69,9 @@ def get_users_raw_data() -> list:
     return users_raw_data
 
 
-def group_by_user_row_data(raw_data: list) -> dict:
-    """Сгруппировать всех дежурных по юзерам.
-    Один юзер может дежурить в нескольких когортах."""
+def group_by_user_raw_data(raw_data: list) -> dict:
+    """Сгруппировать всех дежурных по юзерам,
+    т.к. один юзер может дежурить в нескольких когортах."""
     users_group_data = {}
     for user_data in raw_data:
         if user_data.email in users_group_data:
