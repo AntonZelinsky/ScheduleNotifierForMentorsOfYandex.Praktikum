@@ -21,7 +21,7 @@ def start(update, context):
 
 def callback_morning_remainder(context: CallbackContext):
     users = notion.get_users_data()
-    for email, user_data in users.items():
+    for user_data in users.values():
         user = Objectify(user_data)
         if user.telegram_id:
             # TODO Как сделать наличие telegram_id гарантированным?
@@ -29,19 +29,19 @@ def callback_morning_remainder(context: CallbackContext):
             # пока добавил __getattr__ в class Expando
             context.bot.send_message(chat_id=user.telegram_id,
                                      text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n'
-                                          f'в {user.database_ids}\n\n'
+                                          f'В {user.database_ids}\n\n'
                                           'Желаю хорошего дня!')
             logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
 
 
 def callback_evening_remainder(context: CallbackContext):
     users = notion.get_users_data()
-    for email, user_data in users.items():
+    for user_data in users.values():
         user = Objectify(user_data)
         if user.telegram_id:
             context.bot.send_message(chat_id=user.telegram_id,
                                      text=f'Добрый вечер, {user.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n'
-                                          f'в {user.database_ids}\n\n'
+                                          f'В {user.database_ids}\n\n'
                                           'Спокойной ночи!')
             logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
@@ -55,7 +55,8 @@ def init():
     updater.job_queue.run_daily(callback_morning_remainder, time)
 
     evening_remainder_hour = int(os.getenv('EVENING_REMAINDER_HOUR', int))
-    time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Moscow"))
+    # time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Moscow"))
+    time = datetime.time(hour=21, minute=45, tzinfo=timezone("Europe/Moscow"))
     updater.job_queue.run_daily(callback_evening_remainder, time)
 
     start_handler = CommandHandler('start', start)
