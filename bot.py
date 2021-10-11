@@ -55,8 +55,7 @@ def init():
     updater.job_queue.run_daily(callback_morning_remainder, time)
 
     evening_remainder_hour = int(os.getenv('EVENING_REMAINDER_HOUR', int))
-    # time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Moscow"))
-    time = datetime.time(hour=21, minute=45, tzinfo=timezone("Europe/Moscow"))
+    time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Moscow"))
     updater.job_queue.run_daily(callback_evening_remainder, time)
 
     start_handler = CommandHandler('start', start)
