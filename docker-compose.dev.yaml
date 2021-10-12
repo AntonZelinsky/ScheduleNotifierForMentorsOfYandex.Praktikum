@@ -1,0 +1,13 @@
+version: '3.9'
+services:
+  postgres:
+    image:  postgres:13.3
+    restart: always
+    ports:
+      - 35432:5432
+    volumes:
+      - ./sql_app/data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER:  root
+      POSTGRES_PASSWORD:  root
+      POSTGRES_DB: schedule_notifier
