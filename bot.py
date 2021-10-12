@@ -55,4 +55,4 @@ def init():
 
     logging.info("Приложение успешно запущено")
     updater.start_polling()
-    updater.idle()
+    # updater.idle()
