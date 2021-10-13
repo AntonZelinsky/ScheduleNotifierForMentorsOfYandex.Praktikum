@@ -1,3 +1,6 @@
+# Binary files
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -5,6 +8,9 @@ __pycache__/
 
 # C extensions
 *.so
+
+# Tokens
+.env
 
 # Distribution / packaging
 .Python
@@ -139,3 +145,6 @@ cython_debug/
 
 # Postgress data
 data/
+
+# VS code files
+.vscode/
