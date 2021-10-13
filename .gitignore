@@ -138,4 +138,4 @@ dmypy.json
 cython_debug/
 
 # Postgress data
-sql_app/data
+data/
