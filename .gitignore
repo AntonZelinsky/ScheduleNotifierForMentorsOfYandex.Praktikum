@@ -6,6 +6,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Tokens
+.env
+
 # Distribution / packaging
 .Python
 build/
@@ -136,3 +139,6 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# VS code files
+.vscode/
