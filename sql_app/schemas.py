@@ -27,6 +27,7 @@ class User(UserBase):
 
 class CohortBase(BaseModel):
     name: str
+    notion_db_id: Optional[str] = None
 
 
 class CohortCreate(CohortBase):
