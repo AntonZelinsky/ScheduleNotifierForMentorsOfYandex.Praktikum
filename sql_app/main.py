@@ -19,28 +19,25 @@ def get_db():
         db.close()
 
 
-@app.get("/faculties/", response_model=List[schemas.Faculty])
-def read_faculties(
+@app.get("/users/", response_model=List[schemas.User])
+def read_users(
           skip: int = 0,
           limit: int = 100,
           db: Session = Depends(get_db),
 ):
-    faculties = crud.get_faculties(db, skip=skip, limit=limit)
-    return faculties
+    users = crud.get_users(db, skip=skip, limit=limit)
+    return users
 
 
-@app.post("/faculties/", response_model=schemas.Faculty)
-def create_faculty(
-          faculty: schemas.FacultyCreate,
-          db: Session = Depends(get_db),
-):
-    db_faculty = crud.get_faculty_by_name(db, name=faculty.name)
-    if db_faculty:
+@app.post("/users/", response_model=schemas.User)
+def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+    db_user = crud.get_user_by_telegram_id(db, telegram_id=user.telegram_id)
+    if db_user:
         raise HTTPException(
             status_code=400,
-            detail="Faculty already added",
+            detail="User already registered",
         )
-    return crud.create_faculty(db=db, faculty=faculty)
+    return crud.create_user(db=db, user=user)
 
 
 @app.get("/cohorts/", response_model=List[schemas.Cohort])
@@ -58,11 +55,7 @@ def create_cohort(
           cohort: schemas.CohortCreate,
           db: Session = Depends(get_db),
 ):
-    db_cohort = crud.get_cohort_by_faculty_id_and_number(
-        db,
-        faculty_id=cohort.faculty_id,
-        number=cohort.number,
-    )
+    db_cohort = crud.get_cohort_by_name(db, name=cohort.name)
     if db_cohort:
         raise HTTPException(
             status_code=400,

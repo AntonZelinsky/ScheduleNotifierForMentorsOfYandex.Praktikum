@@ -143,8 +143,5 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-# Postgress data
-data/
-
 # VS code files
 .vscode/

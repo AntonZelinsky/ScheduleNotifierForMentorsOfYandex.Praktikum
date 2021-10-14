@@ -1,4 +1,6 @@
+from datetime import datetime
 from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -14,39 +16,25 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_activated: bool
-    email: str
-    notion_us_id: str
-
-    class Config:
-        orm_mode = True
-
-
-class FacultyBase(BaseModel):
-    name: str
-
-
-class FacultyCreate(FacultyBase):
-    pass
-
-
-class Faculty(FacultyBase):
-    id: int
+    email: Optional[str] = None
+    notion_us_id: Optional[str] = None
+    created: datetime
+    modified: datetime
 
     class Config:
         orm_mode = True
 
 
 class CohortBase(BaseModel):
-    number: int
+    name: str
 
 
 class CohortCreate(CohortBase):
-    faculty_id: int
+    pass
 
 
 class Cohort(CohortBase):
     id: int
-    faculty_id: int
     notion_db_id: Optional[str] = None
 
     class Config:

@@ -1,6 +1,7 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, DateTime
-from sqlalchemy.orm import relationship
 from datetime import datetime
+
+from sqlalchemy import Boolean, Column, DateTime, Integer, String
+
 from .database import Base
 
 
@@ -21,17 +22,5 @@ class Cohort(Base):
     __tablename__ = "Cohorts"
 
     id = Column(Integer, primary_key=True, index=True)
-    number = Column(Integer)
-    faculty_id = Column(Integer, ForeignKey("Faculty.id"))
-    notion_db_id = Column(String)
-
-    faculty = relationship("Faculty", back_populates="cohorts")
-
-
-class Faculty(Base):
-    __tablename__ = "Faculty"
-
-    id = Column(Integer, primary_key=True, index=True)
     name = Column(String)
-
-    cohorts = relationship("Cohort", back_populates="faculty")
+    notion_db_id = Column(String)
