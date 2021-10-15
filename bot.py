@@ -54,4 +54,8 @@ def init():
     dispatcher.add_handler(start_handler)
 
     logging.info("Приложение успешно запущено")
-    updater.start_polling()
+    # registering a new webhook, start_polling replaced
+    # temp url provided by ngrok, move to Heroku?
+    updater.start_webhook(listen='0.0.0.0',
+                          port=80,
+                          webhook_url=f'https://2c62-188-242-211-2.ngrok.io/{token}')
