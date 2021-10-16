@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
+from app import schemas
 from core import models
-from sql_app import schemas
 
 
 def get_user_by_telegram_id(db: Session, telegram_id: int):

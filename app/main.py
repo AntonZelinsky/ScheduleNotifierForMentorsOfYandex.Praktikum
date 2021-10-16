@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from core import models
-from sql_app.database import engine
+from core.database import engine
 
 from .api import router
 
