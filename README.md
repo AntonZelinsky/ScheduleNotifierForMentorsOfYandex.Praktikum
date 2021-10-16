@@ -1,4 +1,4 @@
-#Квик старт
+# Квик старт
 
 ```bash
 $ git clone git@github.com:AntonZelinsky/ScheduleNotifierForMentorsOfYandex.Praktikum.git
@@ -31,20 +31,24 @@ $ uvicorn app.main:app
 
 Добавить юзера
 ```bash
-$ curl -H "Content-Type: application/json" -d '{"telegram_id": 12345678, "name": "Full name"}' http://127.0.0.1:8000/users/
+$ curl -H "Content-Type: application/json" \
+-d '{"telegram_id": 12345678, "name": "Full name"}' \
+http://127.0.0.1:8000/users/
 ```
 
 Добавить когорту
 ```bash
-$ curl -H "Content-Type: application/json" -d '{"name": "20 когорта. Python-разработчик"}' http://127.0.0.1:8000/cohorts/
+$ curl -H "Content-Type: application/json" \
+-d '{"name": "20 когорта. Python-разработчик"}' \
+http://127.0.0.1:8000/cohorts/
 ```
 
-FastAPI - Swagger UI
+FastAPI - Swagger UI  
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
 
-##Requirements
-Протестировано на 
-Docker 19.03
-Docker-compose 1.29
-Python 3.7
+## Requirements
+Протестировано на  
+- Docker 19.03  
+- Docker-compose 1.29  
+- Python 3.7  
