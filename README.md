@@ -5,7 +5,7 @@ $ git clone git@github.com:AntonZelinsky/ScheduleNotifierForMentorsOfYandex.Prak
 $ cd ScheduleNotifierForMentorsOfYandex.Praktikum
 ```
 
-Создать и активировать виртуальное окружение  
+1. Создать и активировать виртуальное окружение  
 подтянуть зависимости
 ```bash
 $ python3 -m venv venv
@@ -13,30 +13,34 @@ $ source venv/bin/activate
 $ pip install -r requirements.txt
 ```
 
-Добавить переменные окружения
+2. Переименовать заготовку с переменными окружения.
 ```bash
 $ mv .env.example .env
-$ vim .env
 ```
+Добавить свои значения для переменных окружения
 
-Запустить докер-контейнер
+3. Запустить докер-контейнер.  
+В докере поднимаем БД Postgres к которой можно подключится. 
+Пропустите этот шаг, если будете использовать другую базу
 ```bash
 $ docker-compose -f docker-compose.dev.yaml up -d
 ```
 
-Запустить сервер
+4. Запустить сервер
 ```bash
 $ uvicorn app.main:app
 ```
 
-Добавить юзера
+## Тестировать
+
+Добавить юзера, отправив удобным способом POST-запрос
 ```bash
 $ curl -H "Content-Type: application/json" \
 -d '{"telegram_id": 12345678, "name": "Full name"}' \
 http://127.0.0.1:8000/users/
 ```
 
-Добавить когорту
+Добавить когорту, так же отправив POST-запрос любым доступным способом
 ```bash
 $ curl -H "Content-Type: application/json" \
 -d '{"name": "20 когорта. Python-разработчик"}' \
