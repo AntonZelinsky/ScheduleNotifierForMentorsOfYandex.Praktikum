@@ -51,9 +51,9 @@ def init():
         update_queue = Queue()
 
         dispatcher = Dispatcher(bot, update_queue)
-        dispatcher.add_handler(start)
+        # dispatcher.add_handler(start)
 
-        bot.set_webhook(webhook_url=webhook_url)
+        bot.set_webhook(webhook_url)
         thread = Thread(target=dispatcher.start, name='dispatcher')
         thread.start()
         logging.info(f'Приложение работает через вебхук {webhook_url}')
