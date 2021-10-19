@@ -7,10 +7,24 @@ from threading import Thread
 
 from pytz import timezone
 from telegram import ParseMode, Bot
-from telegram.ext import CommandHandler, Dispatcher
-from telegram.ext import Updater, CallbackContext
+from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher
 
 import notion
+from helpers import Objectify
+
+# не уверен, если этот метод должен быть здесь или в апи
+def setup(token, webhook_url):
+    bot = Bot(token)
+    update_queue = Queue()
+
+    dispatcher = Dispatcher(bot, update_queue)
+
+    bot.set_webhook(webhook_url)
+    thread = Thread(target=dispatcher.start, name='dispatcher')
+    thread.start()
+
+    # как переправить update queue в апи и сообщить боту о дальнейших действиях?
+    return (update_queue, dispatcher)
 
 
 def start(update, context):
@@ -23,21 +37,30 @@ def start(update, context):
 
 
 def callback_morning_reminder(context: CallbackContext):
-    user = notion.get_user_data()
-
-    context.bot.send_message(chat_id=user.telegram_id,
-                             text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n\n'
-                                  'Желаю хорошего дня!')
-    logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
+    users = notion.get_users_data()
+    for user_data in users.values():
+        user = Objectify(user_data)
+        if user.telegram_id:
+            # TODO Как сделать наличие telegram_id гарантированным?
+            # или будут разные каналы доставки?
+            # пока добавил __getattr__ в class Expando
+            context.bot.send_message(chat_id=user.telegram_id,
+                                     text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n'
+                                          f'В {user.database_ids}\n\n'
+                                          'Желаю хорошего дня!')
+            logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
 
 
 def callback_evening_reminder(context: CallbackContext):
-    user = notion.get_user_data()
-
-    context.bot.send_message(chat_id=user.telegram_id,
-                             text=f'Добрый вечер, {user.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n\n'
-                                  'Спокойной ночи!')
-    logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
+    users = notion.get_users_data()
+    for user_data in users.values():
+        user = Objectify(user_data)
+        if user.telegram_id:
+            context.bot.send_message(chat_id=user.telegram_id,
+                                     text=f'Добрый вечер, {user.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n'
+                                          f'В {user.database_ids}\n\n'
+                                          'Спокойной ночи!')
+            logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
 
 def init():
@@ -47,32 +70,23 @@ def init():
 
     """Если webhook_url не задан -> запускаем приложение через пуллинг."""
     if webhook_url:
-        bot = Bot(token)
-        update_queue = Queue()
-
-        dispatcher = Dispatcher(bot, update_queue)
-        # dispatcher.add_handler(start)
-
-        bot.set_webhook(webhook_url)
-        thread = Thread(target=dispatcher.start, name='dispatcher')
-        thread.start()
-        logging.info(f'Приложение работает через вебхук {webhook_url}')
-
-        return update_queue, dispatcher
+        setup(token=token, webhook_url=webhook_url)
+        logging.info(f'Приложение работает через вебхук')
     
-    updater = Updater(token, use_context=True)
+    else:
+        updater = Updater(token, use_context=True)
 
-    # вынести логику ремайндеров в методы, оформить в качестве хэндлеров?
-    morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
-    time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
-    updater.job_queue.run_daily(callback_morning_reminder, time)
+        # вынести логику ремайндеров в методы, оформить в качестве хэндлеров?
+        morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
+        time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+        updater.job_queue.run_daily(callback_morning_reminder, time)
 
-    evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
-    time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
-    updater.job_queue.run_daily(callback_evening_reminder, time)
+        evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
+        time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+        updater.job_queue.run_daily(callback_evening_reminder, time)
 
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(start_handler)
-    updater.start_polling()
+        dispatcher = updater.dispatcher
+        dispatcher.add_handler(start_handler)
+        updater.start_polling()
 
-    logging.info('Приложение успешно запущено через пулинг')
+        logging.info('Приложение успешно запущено через пулинг')     

@@ -9,4 +9,5 @@ class Objectify:
 
 
 class Expando(object):
-    pass
+    def __getattr__(self, attrname):
+        return None
