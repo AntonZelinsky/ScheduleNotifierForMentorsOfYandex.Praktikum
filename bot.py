@@ -2,12 +2,29 @@ import datetime
 import logging
 import os
 
+from queue import Queue
+from threading import Thread
+
 from pytz import timezone
-from telegram import ParseMode
-from telegram.ext import CallbackContext, CommandHandler, Updater
+from telegram import ParseMode, Bot
+from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher
 
 import notion
 from helpers import Objectify
+
+# не уверен, если этот метод должен быть здесь или в апи
+def setup(token, webhook_url):
+    bot = Bot(token)
+    update_queue = Queue()
+
+    dispatcher = Dispatcher(bot, update_queue)
+
+    bot.set_webhook(webhook_url)
+    thread = Thread(target=dispatcher.start, name='dispatcher')
+    thread.start()
+
+    # как переправить update queue в апи и сообщить боту о дальнейших действиях?
+    return (update_queue, dispatcher)
 
 
 def start(update, context):
@@ -19,7 +36,7 @@ def start(update, context):
                  f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
 
 
-def callback_morning_remainder(context: CallbackContext):
+def callback_morning_reminder(context: CallbackContext):
     users = notion.get_users_data()
     for user_data in users.values():
         user = Objectify(user_data)
@@ -34,7 +51,7 @@ def callback_morning_remainder(context: CallbackContext):
             logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
 
 
-def callback_evening_remainder(context: CallbackContext):
+def callback_evening_reminder(context: CallbackContext):
     users = notion.get_users_data()
     for user_data in users.values():
         user = Objectify(user_data)
@@ -48,20 +65,28 @@ def callback_evening_remainder(context: CallbackContext):
 
 def init():
     token = os.getenv('TELEGRAM_TOKEN')
-    updater = Updater(token, use_context=True)
-
-    morning_remainder_hour = int(os.getenv('MORNING_REMAINDER_HOUR', int))
-    time = datetime.time(hour=morning_remainder_hour, tzinfo=timezone("Europe/Moscow"))
-    updater.job_queue.run_daily(callback_morning_remainder, time)
-
-    evening_remainder_hour = int(os.getenv('EVENING_REMAINDER_HOUR', int))
-    time = datetime.time(hour=evening_remainder_hour, tzinfo=timezone("Europe/Moscow"))
-    updater.job_queue.run_daily(callback_evening_remainder, time)
-
+    webhook_url = os.getenv('DOMAIN_ADDRESS')
     start_handler = CommandHandler('start', start)
-    dispatcher = updater.dispatcher
-    dispatcher.add_handler(start_handler)
 
-    logging.info("Приложение успешно запущено")
-    updater.start_polling()
-    updater.idle()
+    """Если webhook_url не задан -> запускаем приложение через пуллинг."""
+    if webhook_url:
+        setup(token=token, webhook_url=webhook_url)
+        logging.info(f'Приложение работает через вебхук')
+    
+    else:
+        updater = Updater(token, use_context=True)
+
+        # вынести логику ремайндеров в методы, оформить в качестве хэндлеров?
+        morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
+        time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+        updater.job_queue.run_daily(callback_morning_reminder, time)
+
+        evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
+        time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+        updater.job_queue.run_daily(callback_evening_reminder, time)
+
+        dispatcher = updater.dispatcher
+        dispatcher.add_handler(start_handler)
+        updater.start_polling()
+
+        logging.info('Приложение успешно запущено через пулинг')     
