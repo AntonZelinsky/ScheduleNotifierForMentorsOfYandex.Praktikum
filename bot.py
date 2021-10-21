@@ -12,7 +12,7 @@ from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher
 import notion
 from helpers import Objectify
 
-# не уверен, если этот метод должен быть здесь или в апи
+
 def setup(token, webhook_url):
     bot = Bot(token)
     update_queue = Queue()
@@ -23,7 +23,8 @@ def setup(token, webhook_url):
     thread = Thread(target=dispatcher.start, name='dispatcher')
     thread.start()
 
-    # как переправить update queue в апи и сообщить боту о дальнейших действиях?
+    # не уверен, если этот метод должен быть здесь или в апи
+    # как все это добро передать в апи?
     return (update_queue, dispatcher)
 
 
