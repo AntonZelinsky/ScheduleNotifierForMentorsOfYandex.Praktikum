@@ -13,7 +13,7 @@ import notion
 from helpers import Objectify
 
 
-def setup(token, webhook_url):
+def init_webhook(token, webhook_url):
     bot = Bot(token)
     update_queue = Queue()
 
@@ -71,7 +71,7 @@ def init():
 
     """Если webhook_url не задан -> запускаем приложение через пуллинг."""
     if webhook_url:
-        setup(token=token, webhook_url=webhook_url)
+        init_webhook(token=token, webhook_url=webhook_url)
         logging.info(f'Приложение работает через вебхук')
     
     else:
