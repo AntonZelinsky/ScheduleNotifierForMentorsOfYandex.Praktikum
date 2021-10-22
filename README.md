@@ -50,6 +50,18 @@ http://127.0.0.1:8000/cohorts/
 FastAPI - Swagger UI  
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
+## Локальный запуск бота через вебхуки (необходим установленный ngrok):
+- запусти сервер ngrok
+```bash
+$ ./ngrok http 80
+```
+- скопируй https адрес, cозданный ngrok, в переменную DOMAIN_ADDRESS (.env файл)
+Адрес должен выглядеть так: DOMAIN_ADDRESS=https://example.ngrok.io/BOT_TOKEN/telegramWebhook
+
+- запусти бота из корневой директории приложения
+```bash
+$ python run.py
+```
 
 ## Requirements
 Протестировано на  
