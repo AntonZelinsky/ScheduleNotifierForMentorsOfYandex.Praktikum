@@ -28,32 +28,31 @@ $ docker-compose -f docker-compose.dev.yaml up -d
 
 4. Накатить миграции
 ```bash
-$ alembic upgrade 3f3caaaf8457
+$ alembic upgrade head
 ```
 
 5. Запустить сервер
 ```bash
 $ uvicorn app.main:app
 ```
+или
+```bash
+$ python run.py
+```
 
 ## Тестировать
 
-Добавить юзера, отправив удобным способом POST-запрос
-```bash
-$ curl -H "Content-Type: application/json" \
--d '{"telegram_id": 12345678, "name": "Full name"}' \
-http://127.0.0.1:8000/users/
-```
-
-Добавить когорту, так же отправив POST-запрос любым доступным способом
-```bash
-$ curl -H "Content-Type: application/json" \
--d '{"name": "20 когорта. Python-разработчик"}' \
-http://127.0.0.1:8000/cohorts/
-```
+#### [https://app.getpostman.com/join-team?invite_code=92ff1b61042fad2ea03d6a251d93e14e&ws=9ebf341f-05c1-4b85-acb7-a7d9992c5101](Постман)  
 
 FastAPI - Swagger UI  
-[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+[http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)  
+
+### Важно!
+При изменении структуры базы не забывай накатывать мигации
+```bash
+$ alembic revision --message="NAME_MIGRATION" --autogenerate
+$ alembic upgrade head
+```
 
 ## Локальный запуск бота через вебхуки (необходим установленный ngrok):
 - запусти сервер ngrok
