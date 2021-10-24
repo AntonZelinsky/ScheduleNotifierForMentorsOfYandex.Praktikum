@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from .routes import cohorts, users
+from .routers import cohorts, users
 
 router = APIRouter()
 router.include_router(users.router, tags=["Users"], prefix="/users")
