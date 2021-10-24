@@ -1,31 +1,15 @@
 import datetime
 import logging
 import os
-
 from queue import Queue
 from threading import Thread
 
 from pytz import timezone
 from telegram import ParseMode, Bot
-from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher
+from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher, JobQueue
 
 import notion
 from helpers import Objectify
-
-
-def init_webhook(token, webhook_url):
-    bot = Bot(token)
-    update_queue = Queue()
-
-    dispatcher = Dispatcher(bot, update_queue)
-
-    bot.set_webhook(webhook_url)
-    thread = Thread(target=dispatcher.start, name='dispatcher')
-    thread.start()
-
-    # не уверен, если этот метод должен быть здесь или в апи
-    # как все это добро передать в апи?
-    return (update_queue, dispatcher)
 
 
 def start(update, context):
@@ -64,30 +48,49 @@ def callback_evening_reminder(context: CallbackContext):
             logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
 
+def init_webhook(token, webhook_url):
+    bot = Bot(token)
+    update_queue = Queue()
+    job_queue = JobQueue()
+    dispatcher = Dispatcher(bot, update_queue, job_queue=job_queue)
+    job_queue.set_dispatcher(dispatcher)
+
+    success_setup = bot.set_webhook(webhook_url)
+    if not success_setup:
+        raise AttributeError("Cannot set up telegram webhook")
+    thread = Thread(target=dispatcher.start, name='dispatcher')
+    thread.start()
+
+    logging.info('Приложение работает через вебхук')
+    return dispatcher
+
+
+def init_pooling(token):
+    updater = Updater(token, use_context=True)
+    updater.start_polling()
+
+    logging.info('Приложение успешно запущено через пулинг')
+    return updater.dispatcher
+
+
 def init():
     token = os.getenv('TELEGRAM_TOKEN')
     webhook_url = os.getenv('DOMAIN_ADDRESS')
-    start_handler = CommandHandler('start', start)
-
-    """Если webhook_url не задан -> запускаем приложение через пуллинг."""
     if webhook_url:
-        init_webhook(token=token, webhook_url=webhook_url)
-        logging.info(f'Приложение работает через вебхук')
-    
+        dispatcher = init_webhook(token, webhook_url)
     else:
-        updater = Updater(token, use_context=True)
+        dispatcher = init_pooling(token)
 
-        # вынести логику ремайндеров в методы, оформить в качестве хэндлеров?
-        morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
-        time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
-        updater.job_queue.run_daily(callback_morning_reminder, time)
+    # вынести логику ремайндеров в методы
+    morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
+    time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    dispatcher.job_queue.run_daily(callback_morning_reminder, time)
 
-        evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
-        time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
-        updater.job_queue.run_daily(callback_evening_reminder, time)
+    evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
+    time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    dispatcher.job_queue.run_daily(callback_evening_reminder, time)
 
-        dispatcher = updater.dispatcher
-        dispatcher.add_handler(start_handler)
-        updater.start_polling()
+    start_handler = CommandHandler('start', start)
+    dispatcher.add_handler(start_handler)
 
-        logging.info('Приложение успешно запущено через пулинг')     
+    return dispatcher
