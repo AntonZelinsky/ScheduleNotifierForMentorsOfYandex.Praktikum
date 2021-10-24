@@ -1,10 +1,14 @@
+import os
 import uvicorn
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from telegram import Update
 
+import bot
 from .api import router
-
+from core import models
+from core.database import engine
 
 # models.Base.metadata.create_all(bind=engine)
 
@@ -22,14 +26,15 @@ def create_app() -> FastAPI:
 
 app = create_app()
 
+# в таком виде dispatcher возвращается как NoneType
+dispatcher = bot.init()
 
 @app.post('/{token}/telegramWebhook')
-def webhook(update: Message):
+def webhook(update: dict):
     """Эндпойнт, на который  приходят обновления из ТГ"""
-    text = update.message['text']
-    print(text)
-    # Как сюда добавить созданный экземпляр бота и хэндлер? 
-    return {'telegram': text}
+    update = Update.de_json(update, dispatcher)
+    dispatcher.process_update(update)
+    # return(update['message']['text'])
 
 
 # TODO вынести в отдельный файл

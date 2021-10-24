@@ -22,9 +22,8 @@ def init_webhook(token, webhook_url):
     bot.set_webhook(webhook_url)
     thread = Thread(target=dispatcher.start, name='dispatcher')
     thread.start()
+    dispatcher.add_handler(CommandHandler('start', start))
 
-    # не уверен, если этот метод должен быть здесь или в апи
-    # как все это добро передать в апи?
     return (update_queue, dispatcher)
 
 
@@ -90,4 +89,4 @@ def init():
         dispatcher.add_handler(start_handler)
         updater.start_polling()
 
-        logging.info('Приложение успешно запущено через пулинг')     
+        logging.info('Приложение успешно запущено через пулинг')   
