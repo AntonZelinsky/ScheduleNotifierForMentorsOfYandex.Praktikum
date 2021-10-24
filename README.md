@@ -42,7 +42,7 @@ $ python run.py
 
 ## Тестировать
 
-#### [https://app.getpostman.com/join-team?invite_code=92ff1b61042fad2ea03d6a251d93e14e&ws=9ebf341f-05c1-4b85-acb7-a7d9992c5101](Постман)  
+#### [Воркспейс на Постмане](https://app.getpostman.com/join-team?invite_code=92ff1b61042fad2ea03d6a251d93e14e&ws=9ebf341f-05c1-4b85-acb7-a7d9992c5101)  
 
 FastAPI - Swagger UI  
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)  
