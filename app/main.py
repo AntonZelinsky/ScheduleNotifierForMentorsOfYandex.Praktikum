@@ -1,12 +1,9 @@
 import uvicorn
-
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from .api import router
 
-
-# models.Base.metadata.create_all(bind=engine)
 
 # создаем модель для сообщения, получаемого с сервера ТГ
 class Message(BaseModel):

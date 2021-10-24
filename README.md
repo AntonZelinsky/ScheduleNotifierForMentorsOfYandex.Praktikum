@@ -26,7 +26,12 @@ $ mv .env.example .env
 $ docker-compose -f docker-compose.dev.yaml up -d
 ```
 
-4. Запустить сервер
+4. Накатить миграции
+```bash
+$ alembic upgrade 3f3caaaf8457
+```
+
+5. Запустить сервер
 ```bash
 $ uvicorn app.main:app
 ```
