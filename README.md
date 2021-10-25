@@ -26,7 +26,7 @@ $ mv .env.example .env
 $ docker-compose -f docker-compose.dev.yaml up -d
 ```
 
-4. Накатить миграции
+4. Применить миграции
 ```bash
 $ alembic upgrade head
 ```
@@ -40,7 +40,7 @@ $ uvicorn app.main:app
 $ python run.py
 ```
 
-## Тестировать
+## Попробовать
 
 #### [Воркспейс на Постмане](https://app.getpostman.com/join-team?invite_code=92ff1b61042fad2ea03d6a251d93e14e&ws=9ebf341f-05c1-4b85-acb7-a7d9992c5101)  
 
@@ -48,7 +48,7 @@ FastAPI - Swagger UI
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)  
 
 ### Важно!
-При изменении структуры базы не забывай накатывать мигации
+При изменении структуры базы не забывайте создавать и применять миграции
 ```bash
 $ alembic revision --message="NAME_MIGRATION" --autogenerate
 $ alembic upgrade head
