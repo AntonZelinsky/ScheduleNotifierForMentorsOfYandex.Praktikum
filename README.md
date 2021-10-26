@@ -72,3 +72,7 @@ $ python run.py
 - Docker 19.03  
 - Docker-compose 1.29  
 - Python 3.7  
+
+## Appreciation
+- [notion-sdk-py](https://github.com/ramnes/notion-sdk-py)
+- [fastapi-utils](https://github.com/dmontagu/fastapi-utils)
