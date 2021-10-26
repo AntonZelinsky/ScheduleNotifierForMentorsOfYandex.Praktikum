@@ -37,3 +37,11 @@ def create_cohort(db: Session, cohort: schemas.CohortCreate):
     db.commit()
     db.refresh(db_cohort)
     return db_cohort
+
+
+def set_cohort_notion_id(db: Session, cohort: schemas.Cohort):
+    db_cohort = db.query(models.Cohort).get(cohort.id)
+    db_cohort.notion_db_id = cohort.notion_db_id
+    db.commit()
+    db.refresh(db_cohort)
+    return db_cohort

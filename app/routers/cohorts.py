@@ -5,6 +5,7 @@ from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy.orm import Session
 
+import notion
 from app import services
 from core.database import get_db
 
@@ -37,4 +38,9 @@ class CohortCBV:
                 status_code=400,
                 detail="Cohort already added",
             )
-        return services.create_cohort(db=self.db, cohort=cohort)
+        created_cohort = services.create_cohort(db=self.db, cohort=cohort)
+        created_calendar_database = notion.create_calendar_database(
+            cohort=created_cohort,
+        )
+        created_cohort.notion_db_id = created_calendar_database.id
+        return services.set_cohort_notion_id(db=self.db, cohort=created_cohort)

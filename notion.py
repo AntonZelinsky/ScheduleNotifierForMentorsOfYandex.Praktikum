@@ -1,8 +1,11 @@
 import datetime
 import os
+from uuid import UUID
 
 import notion_client
+from fastapi import HTTPException
 
+from app import schemas
 from helpers import Expando, Objectify
 
 
@@ -89,3 +92,60 @@ def group_by_user_raw_data(raw_data: list) -> dict:
             users_group_data.update(user_dist_data)
     return users_group_data
 
+
+def query_databases_by_str(query: str):
+    """Получить все Databases в которых встреачается
+    вхождение название когорты"""
+    client = create_client()
+    try:
+        response = client.search(
+            **{
+                "query": query,
+                "filter": {
+                    "value": "database",
+                    "property": "object"
+                }
+            }
+        ).get('results')
+    except Exception as e:
+        raise ValueError(f'Notion fell: {e}')
+    return response
+
+
+def is_databases_by_cohort_name(name: str) -> UUID or False:
+    """Получить Databases UUID
+    по точному совпадению заголовка с название когорты."""
+    databases = query_databases_by_str(query=name)
+    for db in databases:
+        if db['title'][0]['text']['content'] == name:
+            return db['id']
+    return False
+
+
+def create_calendar_database(cohort: schemas.Cohort):
+    """Создать Database когорты на странице NOTION_PAGE_ID."""
+    client = create_client()
+    page_id = os.getenv('NOTION_PAGE_ID')
+    db_uuid = is_databases_by_cohort_name(name=cohort.name)
+    if db_uuid:
+        raise HTTPException(
+                status_code=400,
+                detail=f'Notions database «{cohort.name}» {db_uuid} '
+                       f'already added',
+            )
+    try:
+        response = client.databases.create(
+            **{
+                "parent": {"page_id": page_id},
+                "title": [{"text": {"content": cohort.name}}],
+                "properties": {
+                    "Name": {"title": {}},
+                    "Дежурный": {"people": {}},
+                    "Дата": {"date": {}}
+                }
+            }
+        )
+    except Exception as e:
+        raise ValueError(f'Not created DB in Notions: {e}')
+    response = Objectify(response)
+    return response
