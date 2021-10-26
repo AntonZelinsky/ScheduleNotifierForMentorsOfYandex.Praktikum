@@ -23,10 +23,10 @@ def upgrade():
     )
     op.bulk_insert(cohorts_table,
         [
-            {'id': 1, 'name': '1 когорта',
-                    'notion_db_id': 'aeb4e7088d6b496f91eee139a7fbbdbb'},
-            {'id': 2, 'name': '2 когорта',
-                    'notion_db_id': 'bd13def18bb94135ac55fa67fd4f73b6'},
+            {'name': '1 когорта',
+                    'notion_db_id': 'aeb4e708-8d6b-496f-91ee-e139a7fbbdbb'},
+            {'name': '2 когорта',
+                    'notion_db_id': 'bd13def1-8bb9-4135-ac55-fa67fd4f73b6'},
         ]
     )
 
