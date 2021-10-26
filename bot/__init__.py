@@ -1,15 +1,25 @@
 import datetime
 import logging
-import os
 from queue import Queue
 from threading import Thread
 
 from pytz import timezone
 from telegram import ParseMode, Bot
-from telegram.ext import CallbackContext, CommandHandler, Updater, Dispatcher, JobQueue
+from telegram.ext import (CallbackContext,
+                          CommandHandler,
+                          Updater,
+                          Dispatcher,
+                          JobQueue)
 
 import notion
 from helpers import Objectify
+from app.config import config, DEBUG_MODE
+
+
+settings = config['test']()
+
+if not DEBUG_MODE:
+    settings = config['production']()
 
 
 def start(update, context):
@@ -74,20 +84,17 @@ def init_pooling(token):
 
 
 def init():
-    token = os.getenv('TELEGRAM_TOKEN')
-    webhook_url = os.getenv('DOMAIN_ADDRESS')
+    token = settings.telegram_token
+    webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
     if webhook_url:
         dispatcher = init_webhook(token, webhook_url)
     else:
         dispatcher = init_pooling(token)
 
-    # вынести логику ремайндеров в методы
-    morning_reminder_hour = int(os.getenv('MORNING_REMINDER_HOUR', int))
-    time = datetime.time(hour=morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.time(hour=settings.morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
     dispatcher.job_queue.run_daily(callback_morning_reminder, time)
 
-    evening_reminder_hour = int(os.getenv('EVENING_REMINDER_HOUR', int))
-    time = datetime.time(hour=evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.time(hour=settings.evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
     dispatcher.job_queue.run_daily(callback_evening_reminder, time)
 
     start_handler = CommandHandler('start', start)

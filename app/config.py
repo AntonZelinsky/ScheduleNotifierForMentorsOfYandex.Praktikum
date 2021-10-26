@@ -1,7 +1,15 @@
 from pydantic import BaseSettings
 
 
+DEBUG_MODE = True
+
+
 class BaseConfig(BaseSettings):
+    """
+    Базовый класс и валидатор для всех переменных окружения.
+    Значение, предоставленное в этом классе,
+    будет использовано в случае если его нет в .env файле
+    """
     telegram_token: str
     notion_token: str
     notion_database_id: str
@@ -15,9 +23,17 @@ class BaseConfig(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
+# TODO добавить необходимые перменные или методы для прода и тестов
 class TestConfig(BaseConfig):
-    debug: str = None
+    sqlalchemy_database_url: str
 
 
 class ProductionConfig(BaseConfig):
     pass
+
+
+config = {
+    'base': BaseConfig,
+    'test': TestConfig,
+    'production': ProductionConfig,
+}
