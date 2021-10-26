@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
 
 from .database import Base
 
@@ -22,5 +23,5 @@ class Cohort(Base):
     __tablename__ = "Cohorts"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
-    notion_db_id = Column(String)
+    name = Column(String, unique=True)
+    notion_db_id = Column(UUID(as_uuid=True))
