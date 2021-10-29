@@ -1,7 +1,6 @@
 from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
-from sqlalchemy.dialects.postgresql import UUID
 
 from .database import Base
 
@@ -24,4 +23,7 @@ class Cohort(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True)
-    notion_db_id = Column(UUID(as_uuid=True))
+    notion_db_id = Column(String, unique=True)
+
+    def __repr__(self):
+        return f'{self.id}: {self.name} {self.notion_db_id}'

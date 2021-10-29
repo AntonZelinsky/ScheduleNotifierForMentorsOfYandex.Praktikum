@@ -1,18 +1,17 @@
 import datetime
 import os
-from uuid import UUID
+from typing import List
 
-import notion_client
-from fastapi import HTTPException
+from notion_client import APIResponseError, Client
 
-from app import schemas
+from app import schemas, services
 from helpers import Expando, Objectify
 
 
 def create_client():
     notion_token = os.getenv('NOTION_TOKEN')
 
-    client = notion_client.Client(auth=notion_token)
+    client = Client(auth=notion_token)
 
     return client
 
@@ -94,8 +93,10 @@ def group_by_user_raw_data(raw_data: list) -> dict:
 
 
 def query_databases_by_str(query: str):
+    # TODO добавить обаботку пагинации. Сейчас можем получить максимум 100.
     """Получить все Databases в которых встреачается
-    вхождение название когорты"""
+    вхождение название когорты.
+    Пустая строка -- все Databases"""
     client = create_client()
     try:
         response = client.search(
@@ -107,45 +108,25 @@ def query_databases_by_str(query: str):
                 }
             }
         ).get('results')
-    except Exception as e:
+    except APIResponseError as e:
         raise ValueError(f'Notion fell: {e}')
     return response
 
 
-def is_databases_by_cohort_name(name: str) -> UUID or False:
-    """Получить Databases UUID
-    по точному совпадению заголовка с название когорты."""
-    databases = query_databases_by_str(query=name)
-    for db in databases:
-        if db['title'][0]['text']['content'] == name:
-            return db['id']
-    return False
-
-
-def create_calendar_database(cohort: schemas.Cohort):
-    """Создать Database когорты на странице NOTION_PAGE_ID."""
-    client = create_client()
-    page_id = os.getenv('NOTION_PAGE_ID')
-    db_uuid = is_databases_by_cohort_name(name=cohort.name)
-    if db_uuid:
-        raise HTTPException(
-                status_code=400,
-                detail=f'Notions database «{cohort.name}» {db_uuid} '
-                       f'already added',
-            )
-    try:
-        response = client.databases.create(
-            **{
-                "parent": {"page_id": page_id},
-                "title": [{"text": {"content": cohort.name}}],
-                "properties": {
-                    "Name": {"title": {}},
-                    "Дежурный": {"people": {}},
-                    "Дата": {"date": {}}
-                }
-            }
-        )
-    except Exception as e:
-        raise ValueError(f'Not created DB in Notions: {e}')
-    response = Objectify(response)
-    return response
+def sync_notion_databases_to_db(session) -> List:
+    """Синхронизировать все Databases из Ноушена в БД.
+    Вернуть добавленные Databases."""
+    created_databases = []
+    all_databases = query_databases_by_str("")
+    for db in all_databases:
+        name = db['title'][0]['text']['content']
+        notion_db_id = db['id']
+        cohort = schemas.CohortCreate(name=name, notion_db_id=notion_db_id)
+        try:
+            added_cohort = services.create_cohort(session, cohort)
+            # Объекты модели некорректно складываются в список, а пидантик норм
+            added_cohort = schemas.Cohort.from_orm(added_cohort)
+            created_databases.append(added_cohort)
+        except ValueError:
+            pass
+    return created_databases
