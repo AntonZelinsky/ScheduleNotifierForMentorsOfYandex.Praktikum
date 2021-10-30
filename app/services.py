@@ -35,6 +35,7 @@ def has_cohort_by_uuid(db: Session, uuid: str) -> bool:
 
 
 def create_cohort(db: Session, cohort: schemas.CohortCreate):
+    """Создать когорту в БД, если еще нет когорты с таким uuid."""
     # TODO. FIX: uuid передается в виде строки, иначе какая-то проблема.
     if has_cohort_by_uuid(db, str(cohort.notion_db_id)):
         raise ValueError("Cohort already added")

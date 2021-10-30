@@ -1,10 +1,8 @@
 import datetime
 import os
-from typing import List
 
 from notion_client import APIResponseError, Client
 
-from app import schemas, services
 from helpers import Expando, Objectify
 
 
@@ -111,22 +109,3 @@ def query_databases_by_str(query: str):
     except APIResponseError as e:
         raise ValueError(f'Notion fell: {e}')
     return response
-
-
-def sync_notion_databases_to_db(session) -> List:
-    """Синхронизировать все Databases из Ноушена в БД.
-    Вернуть добавленные Databases."""
-    created_databases = []
-    all_databases = query_databases_by_str("")
-    for db in all_databases:
-        name = db['title'][0]['text']['content']
-        notion_db_id = db['id']
-        cohort = schemas.CohortCreate(name=name, notion_db_id=notion_db_id)
-        try:
-            added_cohort = services.create_cohort(session, cohort)
-            # Объекты модели некорректно складываются в список, а пидантик норм
-            added_cohort = schemas.Cohort.from_orm(added_cohort)
-            created_databases.append(added_cohort)
-        except ValueError:
-            pass
-    return created_databases
