@@ -1,14 +1,14 @@
-import os
 from logging.config import fileConfig
 
-import dotenv
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 from core import models
+from app.config import config
 
-dotenv.load_dotenv()
-url = os.getenv('SQLALCHEMY_DATABASE_URL')
+
+settings = config['test']()
+url = settings.sqlalchemy_database_url
 
 config = context.config
 fileConfig(config.config_file_name)
@@ -28,7 +28,6 @@ def run_migrations_offline():
     script output.
 
     """
-
     context.configure(
         url=url,
         target_metadata=target_metadata,
