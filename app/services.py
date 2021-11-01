@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
@@ -28,7 +30,7 @@ def get_cohorts(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Cohort).offset(skip).limit(limit).all()
 
 
-def has_cohort_by_uuid(db: Session, uuid: str) -> bool:
+def has_cohort_by_uuid(db: Session, uuid: UUID) -> bool:
     return db.query(models.Cohort).filter(
         models.Cohort.notion_db_id == uuid,
     ).first()
@@ -36,8 +38,7 @@ def has_cohort_by_uuid(db: Session, uuid: str) -> bool:
 
 def create_cohort(db: Session, cohort: schemas.CohortCreate):
     """Создать когорту в БД, если еще нет когорты с таким uuid."""
-    # TODO. FIX: uuid передается в виде строки, иначе какая-то проблема.
-    if has_cohort_by_uuid(db, str(cohort.notion_db_id)):
+    if has_cohort_by_uuid(db, cohort.notion_db_id):
         raise HTTPException(status_code=400, detail='Cohort already added')
     db_cohort = models.Cohort(
         name=cohort.name,
