@@ -5,7 +5,7 @@ from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy.orm import Session
 
-from app import services
+from app.services import UserService
 from core.database import get_db
 
 from .. import schemas
@@ -19,8 +19,8 @@ class UserCBV:
 
     @router.get("/", response_model=List[schemas.User])
     def read_users(self, skip: int = 0, limit: int = 100):
-        return services.get_users(self.db, skip=skip, limit=limit)
+        return UserService.get_users(self.db, skip=skip, limit=limit)
 
     @router.post("/", response_model=schemas.User)
     def create_user(self, user: schemas.UserCreate):
-        return services.create_user(db=self.db, user=user)
+        return UserService.create_user(db=self.db, user=user)

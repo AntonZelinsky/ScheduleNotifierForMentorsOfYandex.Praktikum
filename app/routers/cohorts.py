@@ -5,7 +5,7 @@ from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy.orm import Session
 
-from app import services
+from app.services import CohortService
 from core.database import get_db
 
 from .. import schemas
@@ -19,8 +19,8 @@ class CohortCBV:
 
     @router.get("/", response_model=List[schemas.Cohort])
     def read_cohorts(self, skip: int = 0, limit: int = 100):
-        return services.get_cohorts(self.db, skip=skip, limit=limit)
+        return CohortService.get_cohorts(self.db, skip=skip, limit=limit)
 
     @router.post("/", response_model=schemas.Cohort)
     def create_cohort(self, cohort: schemas.CohortCreate):
-        return services.create_cohort(db=self.db, cohort=cohort)
+        return CohortService.create_cohort(db=self.db, cohort=cohort)
