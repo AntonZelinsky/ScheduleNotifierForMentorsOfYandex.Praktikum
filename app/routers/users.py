@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 from sqlalchemy.orm import Session
@@ -19,13 +19,8 @@ class UserCBV:
 
     @router.get("/", response_model=List[schemas.User])
     def read_users(self, skip: int = 0, limit: int = 100):
-        users = services.get_users(self.db, skip=skip, limit=limit)
-        return users
+        return services.get_users(self.db, skip=skip, limit=limit)
 
     @router.post("/", response_model=schemas.User)
     def create_user(self, user: schemas.UserCreate):
-        try:
-            user = services.create_user(db=self.db, user=user)
-        except ValueError as e:
-            raise HTTPException(status_code=400, detail=f'{e}')
-        return user
+        return services.create_user(db=self.db, user=user)

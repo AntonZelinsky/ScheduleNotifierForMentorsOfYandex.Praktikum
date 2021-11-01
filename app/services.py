@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app import schemas
@@ -16,11 +17,10 @@ def get_users(db: Session, skip: int = 0, limit: int = 100):
 def create_user(db: Session, user: schemas.UserCreate):
     """Создать юзера в БД, если еще нет юзера с таким телеграм_ид."""
     if has_user_by_telegram_id(db, telegram_id=user.telegram_id):
-        raise ValueError("User already registered")
+        raise HTTPException(status_code=400, detail='User already registered')
     db_user = models.User(name=user.name, telegram_id=user.telegram_id)
     db.add(db_user)
     db.commit()
-    db.refresh(db_user)
     return db_user
 
 
@@ -38,12 +38,11 @@ def create_cohort(db: Session, cohort: schemas.CohortCreate):
     """Создать когорту в БД, если еще нет когорты с таким uuid."""
     # TODO. FIX: uuid передается в виде строки, иначе какая-то проблема.
     if has_cohort_by_uuid(db, str(cohort.notion_db_id)):
-        raise ValueError("Cohort already added")
+        raise HTTPException(status_code=400, detail='Cohort already added')
     db_cohort = models.Cohort(
         name=cohort.name,
         notion_db_id=cohort.notion_db_id,
     )
     db.add(db_cohort)
     db.commit()
-    db.refresh(db_cohort)
     return db_cohort

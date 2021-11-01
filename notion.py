@@ -1,7 +1,7 @@
 import datetime
 import os
 
-from notion_client import APIResponseError, Client
+from notion_client import Client
 
 from helpers import Expando, Objectify
 
@@ -88,24 +88,3 @@ def group_by_user_raw_data(raw_data: list) -> dict:
             }
             users_group_data.update(user_dist_data)
     return users_group_data
-
-
-def query_databases_by_str(query: str):
-    # TODO добавить обаботку пагинации. Сейчас можем получить максимум 100.
-    """Получить все Databases в которых встреачается
-    вхождение название когорты.
-    Пустая строка -- все Databases"""
-    client = create_client()
-    try:
-        response = client.search(
-            **{
-                "query": query,
-                "filter": {
-                    "value": "database",
-                    "property": "object"
-                }
-            }
-        ).get('results')
-    except APIResponseError as e:
-        raise ValueError(f'Notion fell: {e}')
-    return response
