@@ -13,13 +13,10 @@ from telegram.ext import (CallbackContext,
 
 import notion
 from helpers import Objectify
-from app.config import config, DEBUG_MODE
+from ..core import config
 
 
-settings = config['test']()
-
-if not DEBUG_MODE:
-    settings = config['production']()
+settings = config.get_settings()
 
 
 def start(update, context):
