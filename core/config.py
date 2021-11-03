@@ -9,7 +9,7 @@ class BaseConfig(BaseSettings):
     Значение, предоставленное в этом классе,
     будет использовано в случае если оно не задано в .env файле
     """
-    debug: bool = True
+    environment: str = 'development'
     telegram_token: str
     notion_token: str
     notion_database_id: str
@@ -32,7 +32,6 @@ class TestConfig(BaseConfig):
 
 
 class ProductionConfig(BaseConfig):
-    debug: bool = False
     sqlalchemy_database_url: str
 
 
@@ -45,6 +44,10 @@ config = {
 
 @lru_cache()
 def get_settings():
-    if BaseConfig().debug:
-        return config['development']()
-    return config['production']()
+    env = BaseConfig().environment
+    print(env)
+    print(config[env]())
+    # if BaseConfig().debug:
+    #     return config['development']()
+    # return config['production']()
+get_settings()
