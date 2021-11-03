@@ -45,9 +45,4 @@ config = {
 @lru_cache()
 def get_settings():
     env = BaseConfig().environment
-    print(env)
-    print(config[env]())
-    # if BaseConfig().debug:
-    #     return config['development']()
-    # return config['production']()
-get_settings()
+    return config[env]()
