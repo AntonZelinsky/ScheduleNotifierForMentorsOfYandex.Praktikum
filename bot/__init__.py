@@ -13,20 +13,12 @@ from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler,
 
 from core.config import get_settings
 
+
 settings = get_settings()
 
 # вынести в отдельный файл с константами
 NAME, EMAIL = range(2)
 REPLY_KEYBOARD = [['Отправить письмо повторно', 'Изменить адрес почты']]
-
-
-def start_test(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=f"Привет, {update.effective_chat.full_name}, "
-                                  "я буду присылать тебе уведомления о дежурстве в Я.П, "
-                                  f"твой telegram id *{update.effective_chat.id}*.", parse_mode=ParseMode.MARKDOWN)
-    logging.info(f'Добавился пользователь с именем {update.effective_chat.full_name}, '
-                 f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
 
 
 def start(update, context):
@@ -42,10 +34,11 @@ def start(update, context):
 def request_email(update, context):
     """ Запрашиваем имейл, к которому привязан аккаунт ноушена """
     answer = update.message.text
+
     if answer == REPLY_KEYBOARD[0][1]:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f'Окей, давай изменим твою почту.\n👇')
-        logging.info(f'Пришел запрос на изменение почты')
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f'Отлично!\n{answer}, для завершения регистрации'
@@ -61,13 +54,16 @@ def verify_email(update, context):
     Даем пользователю возможность изменить адрес или отправить подтверждение еще раз
     """
     email = update.message.text
+
     if email == REPLY_KEYBOARD[0][0]:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text='Отправили подтверждение еще раз.')
-        logging.info('Получен запрос на повторную отправку подтверждения')
+        logging.info('Отправили повторное подтверждение')
+
     elif email == REPLY_KEYBOARD[0][1]:
-        logging.info('Получен запрос на повторную отправку подтверждения')
         request_email(update=update, context=context)
+        logging.info(f'Пришел запрос на изменение почты')
+
     else:
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=f'Супер, мы отправили письмо с подтверждением на почту {email}.'
@@ -136,7 +132,7 @@ def init_pooling(token):
 
 def init():
     token = settings.telegram_token
-    # webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
