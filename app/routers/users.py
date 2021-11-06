@@ -13,14 +13,14 @@ router = InferringRouter()
 
 @cbv(router)
 class UserCBV:
+    service: UserService = Depends()
+    skip: int = 0
+    limit: int = 100
 
     @router.get("/", response_model=List[schemas.User])
-    def read_users(self, service: UserService = Depends()):
-        return service.get_users(skip=service.skip, limit=service.limit)
+    def read_users(self):
+        return self.service.get_users(skip=self.skip, limit=self.limit)
 
     @router.post("/", response_model=schemas.User)
-    def create_user(self,
-                    user: schemas.UserCreate,
-                    service: UserService = Depends()
-                    ):
-        return service.create_user(user=user)
+    def create_user(self, user: schemas.UserCreate):
+        return self.service.create_user(user=user)

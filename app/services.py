@@ -10,12 +10,8 @@ from . import schemas
 
 
 class UserService:
-    def __init__(self, db: Session = Depends(get_db),
-                 skip: int = 0, limit: int = 100,
-                 ):
+    def __init__(self, db: Session = Depends(get_db)):
         self.db = db
-        self.skip = skip
-        self.limit = limit
 
     def has_user_by_telegram_id(self, telegram_id: int) -> bool:
         return not self.db.query(models.User).filter(
@@ -36,12 +32,8 @@ class UserService:
 
 
 class CohortService:
-    def __init__(self, db: Session = Depends(get_db),
-                 skip: int = 0, limit: int = 100,
-                 ):
+    def __init__(self, db: Session = Depends(get_db)):
         self.db = db
-        self.skip = skip
-        self.limit = limit
 
     def get_cohorts(self, skip: int = 0, limit: int = 100):
         return self.db.query(models.Cohort).offset(skip).limit(limit).all()
