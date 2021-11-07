@@ -1,7 +1,7 @@
 import datetime
 import os
 
-import notion_client
+from notion_client import Client
 
 from helpers import Expando, Objectify
 
@@ -9,7 +9,7 @@ from helpers import Expando, Objectify
 def create_client():
     notion_token = os.getenv('NOTION_TOKEN')
 
-    client = notion_client.Client(auth=notion_token)
+    client = Client(auth=notion_token)
 
     return client
 
@@ -88,4 +88,3 @@ def group_by_user_raw_data(raw_data: list) -> dict:
             }
             users_group_data.update(user_dist_data)
     return users_group_data
-

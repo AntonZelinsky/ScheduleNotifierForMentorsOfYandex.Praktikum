@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from telegram import Update
 
 import bot
+
 from .api import router
 
 
