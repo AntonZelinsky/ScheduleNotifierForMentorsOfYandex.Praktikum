@@ -17,9 +17,12 @@ def create_client():
     return client
 
 
-def get_database_ids(db: Session = SessionLocal()) -> list:
-    list_ids = [x.notion_db_id for x in db.query(models.Cohort.notion_db_id)]
-    db.close()
+def get_database_ids() -> list:
+    try:
+        db: Session = SessionLocal()
+        list_ids = [x.notion_db_id for x in db.query(models.Cohort.notion_db_id)]
+    finally:
+        db.close()
     return list_ids
 
 
