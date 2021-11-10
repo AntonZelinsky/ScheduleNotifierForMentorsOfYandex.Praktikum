@@ -1,8 +1,11 @@
 import datetime
 import os
 
-from notion_client import Client
+from notion_client import APIResponseError, Client
+from sqlalchemy.orm import Session
 
+from core import models
+from core.database import SessionLocal
 from helpers import Expando, Objectify
 
 
@@ -14,8 +17,10 @@ def create_client():
     return client
 
 
-def get_database_ids() -> list:
-    return os.getenv('NOTION_DATABASE_ID').split(',')
+def get_database_ids(db: Session = SessionLocal()) -> list:
+    list_ids = [x.notion_db_id for x in db.query(models.Cohort.notion_db_id)]
+    db.close()
+    return list_ids
 
 
 def get_users_data() -> dict:
@@ -30,18 +35,21 @@ def get_users_raw_data() -> list:
     date = datetime.date.today().__str__()
     users_raw_data = list()
     for notion_database_id in get_database_ids():
-        response = client.databases.query(
-            **{
-                "database_id": notion_database_id,
-                "filter": {
-                    "property": "Дата",
-                    "date": {
-                        "equals": date,
+        try:
+            response = client.databases.query(
+                **{
+                    "database_id": notion_database_id,
+                    "filter": {
+                        "property": "Дата",
+                        "date": {
+                            "equals": date,
+                        },
                     },
-                },
-            }
-        )
-        response = Objectify(response)
+                }
+            )
+            response = Objectify(response)
+        except APIResponseError as e:
+            raise ValueError(f'Notion fell: {e}')
 
         for item in response.results:
             properties = item.properties
