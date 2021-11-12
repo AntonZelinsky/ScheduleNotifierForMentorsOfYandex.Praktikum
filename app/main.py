@@ -1,10 +1,13 @@
+import logging
+
 from fastapi import FastAPI
-from pydantic import BaseModel
 from telegram import Update
 
 import bot
 
 from .api import router
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 
 
 def create_app() -> FastAPI:

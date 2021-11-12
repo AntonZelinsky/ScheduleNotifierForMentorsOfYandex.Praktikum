@@ -1,17 +1,16 @@
 import datetime
-import os
 
 from notion_client import APIResponseError, Client
-from sqlalchemy.orm import Session
-
 from core import models
+from core.config import get_settings
 from core.database import SessionLocal
 from core.models import Cohort
 from helpers import Expando, Objectify
 
 
 def create_client():
-    notion_token = os.getenv('NOTION_TOKEN')
+    settings = get_settings()
+    notion_token = settings.notion_token
 
     client = Client(auth=notion_token)
 
@@ -79,7 +78,7 @@ def group_by_user_raw_data(raw_data: list) -> dict:
     for user_data in raw_data:
         if user_data.email in users_group_data:
             users_group_data[user_data.email]['databases'] \
-                .append(user_data.database_id)
+                .append(user_data.database)
         else:
             user_dist_data = {
                 user_data.email: {

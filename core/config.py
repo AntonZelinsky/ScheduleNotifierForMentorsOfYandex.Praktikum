@@ -13,10 +13,9 @@ class BaseConfig(BaseSettings):
     debug: bool = True
     telegram_token: str
     notion_token: str
-    notion_database_id: str
     morning_reminder_hour: int = 10
     evening_reminder_hour: int = 20
-    domain_address: str
+    domain_address: str = None
     port: int = 80
     sqlalchemy_database_url: str
 
@@ -25,7 +24,6 @@ class BaseConfig(BaseSettings):
         env_file_encoding = 'utf-8'
 
 
-# TODO добавить необходимые перменные или методы для прода и тестов
 class DevelopmentConfig(BaseConfig):
     sqlalchemy_database_url: str = 'postgresql://root:root@localhost:35432/schedule_notifier'
 
