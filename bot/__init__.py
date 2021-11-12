@@ -13,9 +13,9 @@ from telegram.ext import (CallbackContext,
 
 import notion
 from app.services import CohortService
+from core import config
 from core.database import SessionLocal
 from helpers import Objectify
-from ..core import config
 
 
 settings = config.get_settings()
@@ -91,8 +91,8 @@ def init_pooling(token):
 
 def init():
     token = settings.telegram_token
-    webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
-    if webhook_url:
+    if settings.domain_address:
+        webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url)
     else:
         dispatcher = init_pooling(token)
