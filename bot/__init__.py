@@ -4,12 +4,10 @@ from queue import Queue
 from threading import Thread
 
 import notion
+from app.services import CohortService
+from core import config
+from core.database import SessionLocal
 from helpers import Objectify
-from pytz import timezone
-from telegram import Bot, ParseMode, ReplyKeyboardMarkup
-from telegram.ext import (CallbackContext, CommandHandler, ConversationHandler,
-                          Dispatcher, Filters, JobQueue, MessageHandler,
-                          Updater)
 
 from core.config import get_settings
 
@@ -78,8 +76,13 @@ def stop(update, context):
                              text='Увидимся!')
 
 
+service: CohortService = CohortService(SessionLocal())
+
+
 def callback_morning_reminder(context: CallbackContext):
-    users = notion.get_users_data()
+    cohorts = service.get_cohorts()
+    users = notion.get_users_data(cohorts)
+
     for user_data in users.values():
         user = Objectify(user_data)
         if user.telegram_id:
@@ -88,19 +91,21 @@ def callback_morning_reminder(context: CallbackContext):
             # пока добавил __getattr__ в class Expando
             context.bot.send_message(chat_id=user.telegram_id,
                                      text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n'
-                                          f'В {user.database_ids}\n\n'
+                                          f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
                                           'Желаю хорошего дня!')
             logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
 
 
 def callback_evening_reminder(context: CallbackContext):
-    users = notion.get_users_data()
+    cohorts = service.get_cohorts()
+    users = notion.get_users_data(cohorts)
+
     for user_data in users.values():
         user = Objectify(user_data)
         if user.telegram_id:
             context.bot.send_message(chat_id=user.telegram_id,
                                      text=f'Добрый вечер, {user.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n'
-                                          f'В {user.database_ids}\n\n'
+                                          f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
                                           'Спокойной ночи!')
             logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
@@ -132,16 +137,6 @@ def init_pooling(token):
 
 def init():
     token = settings.telegram_token
-
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
-        states={
-            NAME: [MessageHandler(Filters.text, request_email)],
-            EMAIL: [MessageHandler(Filters.text, verify_email)]
-        },
-        fallbacks=[CommandHandler('stop', stop)]
-    )
-
     if settings.domain_address:
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url)

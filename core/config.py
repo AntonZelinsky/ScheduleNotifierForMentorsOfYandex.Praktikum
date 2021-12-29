@@ -10,39 +10,40 @@ class BaseConfig(BaseSettings):
     будет использовано в случае если оно не задано в .env файле
     """
     environment: str = 'development'
+    debug: bool = True
     telegram_token: str
     notion_token: str
-    notion_database_id: str
     morning_reminder_hour: int = 10
     evening_reminder_hour: int = 20
     domain_address: str = None
+    port: int = 80
+    sqlalchemy_database_url: str
 
     class Config:
         env_file = '.env'
         env_file_encoding = 'utf-8'
 
 
-# TODO добавить необходимые перменные или методы для прода и тестов
 class DevelopmentConfig(BaseConfig):
     sqlalchemy_database_url: str = 'postgresql://root:root@localhost:35432/schedule_notifier'
 
 
-class TestConfig(BaseConfig):
-    sqlalchemy_database_url: str = 'postgresql://root:root@localhost:35432/schedule_notifier'
-
-
 class ProductionConfig(BaseConfig):
-    sqlalchemy_database_url: str
+    environment: str = 'production'
+    debug: bool = False
+    port: int = 80
 
 
 config = {
     'development': DevelopmentConfig,
-    'test': TestConfig,
     'production': ProductionConfig,
 }
 
 
 @lru_cache()
 def get_settings():
-    env = BaseConfig().environment
-    return config[env]()
+    environment = BaseConfig().environment or 'development'
+    settings = config.get(environment)
+    if settings:
+        return settings()
+    raise EnvironmentError('Wrong environment')

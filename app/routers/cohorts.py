@@ -1,35 +1,26 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import Depends
+from fastapi_utils.cbv import cbv
+from fastapi_utils.inferring_router import InferringRouter
 
-from app import services
-from core.database import get_db
+from app.services import CohortService
 
 from .. import schemas
 
-router = APIRouter()
+router = InferringRouter()
 
 
-@router.get("/", response_model=List[schemas.Cohort], tags=['Cohorts'])
-def read_cohorts(
-          skip: int = 0,
-          limit: int = 100,
-          db: Session = Depends(get_db),
-):
-    cohorts = services.get_cohorts(db, skip=skip, limit=limit)
-    return cohorts
+@cbv(router)
+class CohortCBV:
+    service: CohortService = Depends()
+    skip: int = 0
+    limit: int = 100
 
+    @router.get("/", response_model=List[schemas.Cohort])
+    def read_cohorts(self):
+        return self.service.get_cohorts(skip=self.skip, limit=self.limit)
 
-@router.post("/", response_model=schemas.Cohort, tags=['Cohorts'])
-def create_cohort(
-          cohort: schemas.CohortCreate,
-          db: Session = Depends(get_db),
-):
-    db_cohort = services.get_cohort_by_name(db, name=cohort.name)
-    if db_cohort:
-        raise HTTPException(
-            status_code=400,
-            detail="Cohort already added",
-        )
-    return services.create_cohort(db=db, cohort=cohort)
+    @router.post("/", response_model=schemas.Cohort)
+    def create_cohort(self, cohort: schemas.CohortCreate):
+        return self.service.create_cohort(cohort=cohort)
