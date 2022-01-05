@@ -15,6 +15,7 @@ import notion
 from app.services import CohortService
 from core import config
 from core.database import SessionLocal
+from handlers.conversation_handlers import register_new_user, registration_conv
 from helpers import Objectify
 
 
@@ -81,7 +82,7 @@ def init_webhook(token, webhook_url):
     return dispatcher
 
 
-def init_pooling(token):
+def init_polling(token):
     updater = Updater(token, use_context=True)
     updater.start_polling()
 
@@ -95,7 +96,7 @@ def init():
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url)
     else:
-        dispatcher = init_pooling(token)
+        dispatcher = init_polling(token)
 
     time = datetime.time(hour=settings.morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
     dispatcher.job_queue.run_daily(callback_morning_reminder, time)
@@ -103,7 +104,6 @@ def init():
     time = datetime.time(hour=settings.evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
     dispatcher.job_queue.run_daily(callback_evening_reminder, time)
 
-    start_handler = CommandHandler('start', start)
-    dispatcher.add_handler(start_handler)
+    dispatcher.add_handler(registration_conv)
 
     return dispatcher
