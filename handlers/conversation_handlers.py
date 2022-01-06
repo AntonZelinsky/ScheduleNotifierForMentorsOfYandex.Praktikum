@@ -6,76 +6,115 @@ from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
-from handlers.constants import CONFIRM_EMAIL, EMAIL
+from handlers import states
 
 
-# временные переменные для хранения данных о пользователе
-username = ''
-emai_address = ''
+# Variables for user data
+EMAIL = "email"
+USERNAME = "username"
+
+# Constants for callback query data
+UPDATE_EMAIL = "change_email_address"
+RESEND_CONF_LINK = "resend_email"
 
 
 def register_new_user(update, context):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=f"Привет, для получения уведомлений вам необходимо зарегестрироваться.\n"
-        f"Пришлите мне ваше имя.", parse_mode=ParseMode.MARKDOWN)
+        f"Пришлите мне ваше имя.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
     logging.info(
-        f'Добавился пользователь с именем {update.effective_chat.full_name}, '
-        f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
-
-    return EMAIL
+        f"Добавился пользователь с именем {update.effective_chat.full_name}, "
+        f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
+    )
+    return states.REQUEST_EMAIL
 
 
 def request_email(update, context):
-    if update.callback_query:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=(
-                f"Окей, давай изменим адрес электронной почты, "
-                "на которую зарегестрирован твой аккаунт Notion."))
-    else:
-        username = update.message.text
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=(
-                f"Отлично, {username}! Теперь пришли мне адрес электронной почты, "
-                "на которую зарегестрирован твой аккаунт Notion."))
-    return CONFIRM_EMAIL
+    username = update.message.text
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=(
+            f"Отлично, {username}! Теперь пришли мне адрес электронной почты, "
+            "на которую зарегестрирован твой аккаунт Notion."
+        ),
+    )
+    context.user_data[USERNAME] = username
+    logging.info(f"Пользователь выбрал никнейм: {username}")
+    return states.CONFIRM_EMAIL
+
+
+def change_email(update, context):
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=(
+            f"Хорошо, давай поменяем адрес электронной почты.\n"
+            "Пришли адрес, который привязан к твоему аккаунту Notion."
+        ),
+    )
+    logging.info(
+        f"Пользователь {context.user_data[USERNAME]} отправил запрос на смену почты"
+    )
+    return states.CONFIRM_EMAIL
 
 
 def confirmation_sent(update, context):
-    email_address = update.message.text
+    if update.message:
+        email_address = update.message.text
+    else:
+        email_address = context.user_data[EMAIL]
     buttons = [
-        [InlineKeyboardButton(text='Отправить повторно', callback_data='resend_email')],
-        [InlineKeyboardButton(text='Изменить почту', callback_data='change_email_address')]
+        [
+            InlineKeyboardButton(
+                text="Отправить повторно", callback_data=RESEND_CONF_LINK
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Изменить почту", callback_data=UPDATE_EMAIL
+            )
+        ],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=(
             f"На твою почту {email_address} было отправлено письмо с подтверждением, "
-            "следуй инструкциям в письме для завершения процесса регистрации"),
-        reply_markup=keyboard)
+            "следуй инструкциям в письме для завершения процесса регистрации"
+        ),
+        reply_markup=keyboard,
+    )
+    context.user_data[EMAIL] = email_address
+    logging.info(f"Отправили подтверждение на почту {email_address}")
+    return states.UPDATE_DATA
 
 
-def edit_details(update, context):
-    answer = update.callback_query.data
-    if answer == 'change_email_address':
-        request_email(update, context)
-    elif answer == 'resend_email':
-        confirmation_sent(update, context)
+def check_user_data(update, context):
+    action = update.callback_query.data
+    if action == RESEND_CONF_LINK:
+        return confirmation_sent(update, context)
+    elif action == UPDATE_EMAIL:
+        return change_email(update, context)
+
 
 registration_conv = ConversationHandler(
     entry_points=[
-        CommandHandler('start', register_new_user)
+        CommandHandler("start", register_new_user),
     ],
     states={
-        EMAIL: [
-            MessageHandler(Filters.text, request_email)
+        states.REQUEST_EMAIL: [
+            MessageHandler(Filters.text, request_email),
         ],
-        CONFIRM_EMAIL: [
-            MessageHandler(Filters.text, confirmation_sent)
-        ]
+        states.CONFIRM_EMAIL: [
+            MessageHandler(Filters.text, confirmation_sent),
+        ],
+        states.UPDATE_DATA: [
+            CallbackQueryHandler(
+                check_user_data, pass_user_data=True, pass_chat_data=True
+            )
+        ],
     },
-    fallbacks=[CallbackQueryHandler(edit_details)]
+    fallbacks=[]
 )
