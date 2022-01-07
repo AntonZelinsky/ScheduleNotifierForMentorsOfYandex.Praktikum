@@ -6,29 +6,26 @@ from telegram.ext.filters import Filters
 from telegram.ext.messagehandler import MessageHandler
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
-from handlers import states
-
+from handlers import commands, states
 
 # Variables for user data
 EMAIL = "email"
 USERNAME = "username"
-
-# Constants for callback query data
-UPDATE_EMAIL = "change_email_address"
-RESEND_CONF_LINK = "resend_email"
+TELEGRAM_ID = "user_telegram_id"
 
 
 def register_new_user(update, context):
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=f"Привет, для получения уведомлений вам необходимо зарегестрироваться.\n"
-        f"Пришлите мне ваше имя.",
+             f"Пришлите мне ваше имя.",
         parse_mode=ParseMode.MARKDOWN,
     )
     logging.info(
         f"Добавился пользователь с именем {update.effective_chat.full_name}, "
         f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
     )
+    context.user_data[TELEGRAM_ID] = update.effective_chat.id
     return states.REQUEST_EMAIL
 
 
@@ -42,7 +39,7 @@ def request_email(update, context):
         ),
     )
     context.user_data[USERNAME] = username
-    logging.info(f"Пользователь выбрал никнейм: {username}")
+    logging.info(f"Пользователь c ID {context.user_data[TELEGRAM_ID]} выбрал никнейм: {username}")
     return states.CONFIRM_EMAIL
 
 
@@ -55,7 +52,7 @@ def change_email(update, context):
         ),
     )
     logging.info(
-        f"Пользователь {context.user_data[USERNAME]} отправил запрос на смену почты"
+        f"Пользователь {context.user_data[TELEGRAM_ID]} отправил запрос на смену почты"
     )
     return states.CONFIRM_EMAIL
 
@@ -66,16 +63,8 @@ def confirmation_sent(update, context):
     else:
         email_address = context.user_data[EMAIL]
     buttons = [
-        [
-            InlineKeyboardButton(
-                text="Отправить повторно", callback_data=RESEND_CONF_LINK
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Изменить почту", callback_data=UPDATE_EMAIL
-            )
-        ],
+        [InlineKeyboardButton(text="Отправить повторно", callback_data=commands.RESEND_CONF_LINK)],
+        [InlineKeyboardButton(text="Изменить почту", callback_data=commands.UPDATE_EMAIL)],
     ]
     keyboard = InlineKeyboardMarkup(buttons)
     context.bot.send_message(
@@ -87,16 +76,12 @@ def confirmation_sent(update, context):
         reply_markup=keyboard,
     )
     context.user_data[EMAIL] = email_address
-    logging.info(f"Отправили подтверждение на почту {email_address}")
-    return states.UPDATE_DATA
+    logging.info(f"Отправили подтверждение пользователю ID {context.user_data[TELEGRAM_ID]} на почту {email_address}")
+    return states.WAITING_CONFIRM
 
 
-def check_user_data(update, context):
-    action = update.callback_query.data
-    if action == RESEND_CONF_LINK:
-        return confirmation_sent(update, context)
-    elif action == UPDATE_EMAIL:
-        return change_email(update, context)
+def registration_confirmed(update, context):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="Регистрация успешно завершена")
 
 
 registration_conv = ConversationHandler(
@@ -110,10 +95,9 @@ registration_conv = ConversationHandler(
         states.CONFIRM_EMAIL: [
             MessageHandler(Filters.text, confirmation_sent),
         ],
-        states.UPDATE_DATA: [
-            CallbackQueryHandler(
-                check_user_data, pass_user_data=True, pass_chat_data=True
-            )
+        states.WAITING_CONFIRM: [
+            CallbackQueryHandler(confirmation_sent, pattern=commands.RESEND_CONF_LINK),
+            CallbackQueryHandler(change_email, pattern=commands.UPDATE_EMAIL),
         ],
     },
     fallbacks=[]
