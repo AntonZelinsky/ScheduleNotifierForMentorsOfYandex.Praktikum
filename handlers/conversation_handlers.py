@@ -19,7 +19,8 @@ def register_new_user(update, context):
         # TODO: сделать сверку кода из диплинка с кодом из БД
         # если код подтверждения не валиден - запустить процесс регистрации заново
         print("Deeplink found!")
-        print(context.args)
+        confirmation_code = context.args[0]
+        logging.info(f"Код подтверждения: {confirmation_code}")
         return registration_confirmed(update, context)
     else:
         context.bot.send_message(
@@ -83,11 +84,13 @@ def confirmation_sent(update, context):
         reply_markup=keyboard,
     )
     context.user_data[EMAIL] = email_address
+    # Здесь должен активироваться метод отправки письма и генериться уникальный код подтверждения
     logging.info(f"Отправили подтверждение пользователю ID {context.user_data[TELEGRAM_ID]} на почту {email_address}")
     return states.WAITING_CONFIRM
 
 
 def registration_confirmed(update, context):
+    # TODO: почта успешно подтверждена -> создаем запись с новым подтвержденным пользователем в БД
     context.bot.send_message(chat_id=update.effective_chat.id, text="Регистрация успешно завершена")
 
 
