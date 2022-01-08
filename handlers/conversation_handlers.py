@@ -15,18 +15,25 @@ TELEGRAM_ID = "user_telegram_id"
 
 
 def register_new_user(update, context):
-    context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=f"Привет, для получения уведомлений вам необходимо зарегестрироваться.\n"
-             f"Пришлите мне ваше имя.",
-        parse_mode=ParseMode.MARKDOWN,
-    )
-    logging.info(
-        f"Добавился пользователь с именем {update.effective_chat.full_name}, "
-        f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
-    )
-    context.user_data[TELEGRAM_ID] = update.effective_chat.id
-    return states.REQUEST_EMAIL
+    if context.args:
+        # TODO: сделать сверку кода из диплинка с кодом из БД
+        # если код подтверждения не валиден - запустить процесс регистрации заново
+        print("Deeplink found!")
+        print(context.args)
+        return registration_confirmed(update, context)
+    else:
+        context.bot.send_message(
+            chat_id=update.effective_chat.id,
+            text=f"Привет, для получения уведомлений вам необходимо зарегестрироваться.\n"
+                 f"Пришлите мне ваше имя.",
+            parse_mode=ParseMode.MARKDOWN,
+        )
+        logging.info(
+            f"Добавился пользователь с именем {update.effective_chat.full_name}, "
+            f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
+        )
+        context.user_data[TELEGRAM_ID] = update.effective_chat.id
+        return states.REQUEST_EMAIL
 
 
 def request_email(update, context):
