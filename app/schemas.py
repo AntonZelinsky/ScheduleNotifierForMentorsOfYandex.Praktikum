@@ -40,3 +40,23 @@ class Cohort(CohortBase):
 
     class Config:
         orm_mode = True
+
+
+class RegistrationBase(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+
+
+class RegistrationCreate(RegistrationBase):
+    pass
+
+
+class Registration(RegistrationBase):
+    is_obsolete: bool
+    uuid: Optional[UUID] = None
+    created: datetime
+    modified: datetime
+
+    class Config:
+        orm_mode = True

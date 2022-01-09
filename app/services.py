@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from core import models
@@ -31,6 +32,31 @@ class UserService(Services):
         self.db.add(db_user)
         self.db.commit()
         return db_user
+
+    def create_registration(self, registration: schemas.RegistrationCreate):
+        """Создать "заявку" на добавление пользователя."""
+        self.set_registration_obsolete(telegram_id=registration.id)
+        registration = models.Registrations(
+            name=registration.name,
+            email=registration.email,
+            id=registration.id,
+        )
+        self.db.add(registration)
+        self.db.commit()
+        print(self.send_confirmation_code(registration))
+        return registration
+
+    def set_registration_obsolete(self, telegram_id: int):
+        """Отметить устаревшими прошлые регистрации пользователя."""
+        self.db.query(models.Registrations).filter(
+            models.Registrations.id == telegram_id
+        ).update({"is_obsolete": True}, synchronize_session="fetch")
+
+    def send_confirmation_code(self, registration: schemas.Registration):
+        """Отправить письмо с кодом/ссылкой подтверждения регистрации."""
+        email = registration.email
+        text = f'Перейдите по ссылке: <a href="#">{registration.uuid}</a>'
+        return text
 
 
 class CohortService(Services):

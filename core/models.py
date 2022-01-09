@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
-
+import uuid
 from .database import Base
 
 
@@ -28,3 +28,15 @@ class Cohort(Base):
 
     def __repr__(self):
         return f'{self.id}: {self.name} {self.notion_db_id}'
+
+
+class Registrations(Base):
+    __tablename__ = "Registrations"
+
+    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Integer, index=True)  # telegram_id
+    name = Column(String)
+    email = Column(String, unique=True, index=True)
+    is_obsolete = Column(Boolean, default=False)
+    created = Column(DateTime(), default=datetime.now)
+    modified = Column(DateTime(), default=datetime.now, onupdate=datetime.now)
