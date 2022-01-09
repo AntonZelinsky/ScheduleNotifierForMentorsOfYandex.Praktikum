@@ -43,7 +43,8 @@ class UserService(Services):
         )
         self.db.add(registration)
         self.db.commit()
-        print(self.send_confirmation_code(registration))
+        if registration.uuid:
+            self.send_confirmation_code(registration)
         return registration
 
     def set_registration_obsolete(self, telegram_id: int):
