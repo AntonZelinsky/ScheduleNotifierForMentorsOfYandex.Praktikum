@@ -16,16 +16,18 @@ TELEGRAM_ID = "user_telegram_id"
 
 def register_new_user(update, context):
     if context.args:
-        # TODO: сделать сверку кода из диплинка с кодом из БД
-        # если код подтверждения не валиден - запустить процесс регистрации заново
         print("Deeplink found!")
         confirmation_code = context.args[0]
+        # TODO: сделать сверку кода из диплинка с кодом из БД
+        # псевдокод:
+        # if confirmation_code == user.uuid -> успех, создаем запись в БД
+        # else (если код подтверждения неверный) -> запускаем процесс регистрации заново
         logging.info(f"Код подтверждения: {confirmation_code}")
         return registration_confirmed(update, context)
     else:
         context.bot.send_message(
             chat_id=update.effective_chat.id,
-            text=f"Привет, для получения уведомлений вам необходимо зарегестрироваться.\n"
+            text=f"Привет, для получения уведомлений вам необходимо зарегистрироваться.\n"
                  f"Пришлите мне ваше имя.",
             parse_mode=ParseMode.MARKDOWN,
         )
@@ -43,7 +45,7 @@ def request_email(update, context):
         chat_id=update.effective_chat.id,
         text=(
             f"Отлично, {username}! Теперь пришли мне адрес электронной почты, "
-            "на которую зарегестрирован твой аккаунт Notion."
+            "на которую зарегистрирован твой аккаунт Notion."
         ),
     )
     context.user_data[USERNAME] = username
@@ -70,6 +72,7 @@ def confirmation_sent(update, context):
         email_address = update.message.text
     else:
         email_address = context.user_data[EMAIL]
+        # TODO: здесь будем создавать новую запись в таблице Registrations и отправлять письмо
     buttons = [
         [InlineKeyboardButton(text="Отправить повторно", callback_data=commands.RESEND_CONF_LINK)],
         [InlineKeyboardButton(text="Изменить почту", callback_data=commands.UPDATE_EMAIL)],
@@ -84,13 +87,11 @@ def confirmation_sent(update, context):
         reply_markup=keyboard,
     )
     context.user_data[EMAIL] = email_address
-    # Здесь должен активироваться метод отправки письма и генериться уникальный код подтверждения
     logging.info(f"Отправили подтверждение пользователю ID {context.user_data[TELEGRAM_ID]} на почту {email_address}")
     return states.WAITING_CONFIRM
 
 
 def registration_confirmed(update, context):
-    # TODO: почта успешно подтверждена -> создаем запись с новым подтвержденным пользователем в БД
     context.bot.send_message(chat_id=update.effective_chat.id, text="Регистрация успешно завершена")
 
 
