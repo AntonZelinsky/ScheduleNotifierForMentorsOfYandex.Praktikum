@@ -1,13 +1,13 @@
 from uuid import UUID
 
 from fastapi import Depends, HTTPException
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from core import models
 from core.database import get_db
 
 from . import schemas
+from .mail import send_email
 
 
 class Services:
@@ -51,13 +51,22 @@ class UserService(Services):
         """Отметить устаревшими прошлые регистрации пользователя."""
         self.db.query(models.Registrations).filter(
             models.Registrations.id == telegram_id
-        ).update({"is_obsolete": True}, synchronize_session="fetch")
+        ).update({'is_obsolete': True}, synchronize_session='fetch')
 
     def send_confirmation_code(self, registration: schemas.Registration):
         """Отправить письмо с кодом/ссылкой подтверждения регистрации."""
         email = registration.email
-        text = f'Перейдите по ссылке: <a href="#">{registration.uuid}</a>'
-        return text
+        subject = 'Подтверждение регистрации'
+        text = (
+            'Перейдите по ссылке:'
+            f'<a href="https://t.me/BOT_NAME?start={registration.uuid}">'
+            f'{registration.uuid}</a>'
+        )
+        send_email(
+            recipients=[email],
+            subject=subject,
+            html=text
+        )
 
 
 class CohortService(Services):
