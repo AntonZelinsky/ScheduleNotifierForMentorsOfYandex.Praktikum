@@ -1,18 +1,22 @@
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
+from fastapi import BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core import models
 from core.database import get_db
 
 from . import schemas
-from .mail import send_email
+from .mail import send_email_in_bg
 
 
 class Services:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self,
+                 background_tasks: BackgroundTasks,
+                 db: Session = Depends(get_db),
+                 ):
         self.db = db
+        self.background_tasks = background_tasks
 
 
 class UserService(Services):
@@ -58,14 +62,15 @@ class UserService(Services):
         email = registration.email
         subject = 'Подтверждение регистрации'
         text = (
-            'Перейдите по ссылке:'
+            'Перейдите по ссылке: '
             f'<a href="https://t.me/BOT_NAME?start={registration.uuid}">'
             f'{registration.uuid}</a>'
         )
-        send_email(
+        send_email_in_bg(
+            self.background_tasks,
             recipients=[email],
             subject=subject,
-            html=text
+            html=text,
         )
 
 

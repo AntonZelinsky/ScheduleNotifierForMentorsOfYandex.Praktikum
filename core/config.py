@@ -26,6 +26,16 @@ class BaseConfig(BaseSettings):
 
 class DevelopmentConfig(BaseConfig):
     sqlalchemy_database_url: str = 'postgresql://root:root@localhost:35432/schedule_notifier'
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int = 587
+    mail_server: str
+    mail_from_name: str
+    mail_tls: bool = False
+    mail_ssl: bool = True
+    use_credentials: bool = True
+    validate_certs: bool = True
 
 
 class ProductionConfig(BaseConfig):

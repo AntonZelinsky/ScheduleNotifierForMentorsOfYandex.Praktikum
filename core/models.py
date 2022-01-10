@@ -37,7 +37,7 @@ class Registrations(Base):
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     telegram_id = Column(Integer, index=True)
     name = Column(String)
-    email = Column(String, unique=True, index=True)
+    email = Column(String, unique=False, index=True)
     is_obsolete = Column(Boolean, default=False)
     created = Column(DateTime(), default=datetime.now)
     modified = Column(DateTime(), default=datetime.now, onupdate=datetime.now)
