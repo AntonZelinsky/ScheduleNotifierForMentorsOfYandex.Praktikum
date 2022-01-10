@@ -35,7 +35,7 @@ class Registrations(Base):
     __tablename__ = "Registrations"
 
     uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    id = Column(Integer, index=True)  # telegram_id
+    telegram_id = Column(Integer, index=True)
     name = Column(String)
     email = Column(String, unique=True, index=True)
     is_obsolete = Column(Boolean, default=False)

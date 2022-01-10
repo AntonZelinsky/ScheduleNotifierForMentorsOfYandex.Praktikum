@@ -43,7 +43,7 @@ class Cohort(CohortBase):
 
 
 class RegistrationBase(BaseModel):
-    id: int
+    telegram_id: int
     name: str
     email: EmailStr
 

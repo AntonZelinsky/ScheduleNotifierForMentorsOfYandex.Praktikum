@@ -35,11 +35,11 @@ class UserService(Services):
 
     def create_registration(self, registration: schemas.RegistrationCreate):
         """Создать "заявку" на добавление пользователя."""
-        self.set_registration_obsolete(telegram_id=registration.id)
+        self.set_registration_obsolete(telegram_id=registration.telegram_id)
         registration = models.Registrations(
             name=registration.name,
             email=registration.email,
-            id=registration.id,
+            telegram_id=registration.telegram_id,
         )
         self.db.add(registration)
         self.db.commit()
@@ -50,7 +50,7 @@ class UserService(Services):
     def set_registration_obsolete(self, telegram_id: int):
         """Отметить устаревшими прошлые регистрации пользователя."""
         self.db.query(models.Registrations).filter(
-            models.Registrations.id == telegram_id
+            models.Registrations.telegram_id == telegram_id
         ).update({'is_obsolete': True}, synchronize_session='fetch')
 
     def send_confirmation_code(self, registration: schemas.Registration):
