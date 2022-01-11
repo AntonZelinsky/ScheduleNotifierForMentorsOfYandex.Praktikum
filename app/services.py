@@ -4,10 +4,13 @@ from fastapi import BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core import models
+from core.config import get_settings
 from core.database import get_db
 
 from . import schemas
 from .mail import send_email_in_bg
+
+settings = get_settings()
 
 
 class Services:
@@ -61,16 +64,17 @@ class UserService(Services):
         """Отправить письмо с кодом/ссылкой подтверждения регистрации."""
         email = registration.email
         subject = 'Подтверждение регистрации'
-        text = (
-            'Перейдите по ссылке: '
-            f'<a href="https://t.me/BOT_NAME?start={registration.uuid}">'
-            f'{registration.uuid}</a>'
+        template_body = dict(
+            title="Привет!",
+            h3="Подтвердите регистрацию кликнув по ссылке:",
+            confirmation_code=f"{registration.uuid}",
+            link=f"https://{settings.domain_address}?start={registration.uuid}",
         )
         send_email_in_bg(
             self.background_tasks,
             recipients=[email],
             subject=subject,
-            html=text,
+            template_body=template_body,
         )
 
 

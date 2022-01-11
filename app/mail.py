@@ -16,6 +16,7 @@ conf = ConnectionConfig(
     MAIL_SSL=settings.mail_ssl,
     USE_CREDENTIALS=settings.use_credentials,
     VALIDATE_CERTS=settings.validate_certs,
+    TEMPLATE_FOLDER='./app/templates',
 )
 
 
@@ -23,14 +24,17 @@ def send_email_in_bg(
           background_tasks: BackgroundTasks,
           recipients: list,
           subject: str,
-          html: str,
+          template_body: dict,
         ) -> None:
-    fm = FastMail(conf)
-
     message = MessageSchema(
         subject=subject,
         recipients=recipients,
-        body=html,
+        template_body=template_body,
+        subtype='html',
     )
+    fm = FastMail(conf)
 
-    background_tasks.add_task(fm.send_message, message)
+    background_tasks.add_task(
+        fm.send_message,
+        message, template_name='confirmation_code_email.html',
+    )

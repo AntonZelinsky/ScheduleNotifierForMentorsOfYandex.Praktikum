@@ -36,6 +36,7 @@ class DevelopmentConfig(BaseConfig):
     mail_ssl: bool = True
     use_credentials: bool = True
     validate_certs: bool = True
+    template_folder: str = './app/templates'
 
 
 class ProductionConfig(BaseConfig):
