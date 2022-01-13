@@ -1,9 +1,7 @@
 import logging
+
 from telegram import ParseMode, InlineKeyboardButton
-from telegram.ext import CallbackQueryHandler, ConversationHandler
-from telegram.ext.commandhandler import CommandHandler
-from telegram.ext.filters import Filters
-from telegram.ext.messagehandler import MessageHandler
+from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler, MessageHandler, Filters
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
 from handlers import commands, states
@@ -14,32 +12,40 @@ USERNAME = "username"
 TELEGRAM_ID = "user_telegram_id"
 
 
-def register_new_user(update, context):
+def start(update, context):
+    """Entry point for signup dialogue, checks if deeplink argument exists"""
+    user_id = update.effective_chat.id
     if context.args:
         print("Deeplink found!")
         confirmation_code = context.args[0]
-        # TODO: сделать сверку кода из диплинка с кодом из БД
-        # псевдокод:
-        # if confirmation_code == user.uuid -> успех, создаем запись в БД
+        # псевдокод сверки:
+        # user = User.objects.filter(id=user_id)
+        # if user and confirmation_code == user.uuid -> успех, создаем запись в БД
         # else (если код подтверждения неверный) -> запускаем процесс регистрации заново
-        logging.info(f"Код подтверждения: {confirmation_code}")
-        return registration_confirmed(update, context)
-    else:
-        context.bot.send_message(
-            chat_id=update.effective_chat.id,
-            text=f"Привет, для получения уведомлений вам необходимо зарегистрироваться.\n"
-                 f"Пришлите мне ваше имя.",
-            parse_mode=ParseMode.MARKDOWN,
-        )
-        logging.info(
-            f"Добавился пользователь с именем {update.effective_chat.full_name}, "
-            f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
-        )
-        context.user_data[TELEGRAM_ID] = update.effective_chat.id
-        return states.REQUEST_EMAIL
+        logging.info(f"Сверяем код подтверждения {confirmation_code} с кодом пользователя {user_id}")
+        context.bot.send_message(chat_id=user_id, text="Регистрация успешно завершена")
+        return states.MAIN
+    return register_new_user(update, context)
+
+
+def register_new_user(update, context):
+    """Requests username and saves user's Telegram ID"""
+    context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text=f"Привет, для получения уведомлений тебе необходимо зарегистрироваться.\n"
+             f"Пришли мне твоё имя или никнейм.",
+        parse_mode=ParseMode.MARKDOWN,
+    )
+    logging.info(
+        f"Добавился пользователь с именем {update.effective_chat.full_name}, "
+        f"юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}"
+    )
+    context.user_data[TELEGRAM_ID] = update.effective_chat.id
+    return states.REQUEST_EMAIL
 
 
 def request_email(update, context):
+    """Requests email and saves submitted username"""
     username = update.message.text
     context.bot.send_message(
         chat_id=update.effective_chat.id,
@@ -54,6 +60,7 @@ def request_email(update, context):
 
 
 def change_email(update, context):
+    """Allows user to submit a different email address"""
     context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=(
@@ -68,6 +75,10 @@ def change_email(update, context):
 
 
 def confirmation_sent(update, context):
+    """
+    Notifies the user that a confirmation email has been sent.
+    Provides keyboard options for changing email address or resending the confirmation email.
+    """
     if update.message:
         email_address = update.message.text
     else:
@@ -91,13 +102,14 @@ def confirmation_sent(update, context):
     return states.WAITING_CONFIRM
 
 
-def registration_confirmed(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="Регистрация успешно завершена")
+def main_func(update, context):
+    # Здесь будет какой-то функционал для зарегистрированных пользователей
+    pass
 
 
 registration_conv = ConversationHandler(
     entry_points=[
-        CommandHandler("start", register_new_user),
+        CommandHandler("start", start),
     ],
     states={
         states.REQUEST_EMAIL: [
@@ -109,6 +121,9 @@ registration_conv = ConversationHandler(
         states.WAITING_CONFIRM: [
             CallbackQueryHandler(confirmation_sent, pattern=commands.RESEND_CONF_LINK),
             CallbackQueryHandler(change_email, pattern=commands.UPDATE_EMAIL),
+        ],
+        states.MAIN: [
+            MessageHandler(Filters.text, main_func),
         ],
     },
     fallbacks=[]
