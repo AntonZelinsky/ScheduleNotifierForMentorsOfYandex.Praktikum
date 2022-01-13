@@ -6,9 +6,9 @@ from sqlalchemy.orm import Session
 from core import models
 from core.config import get_settings
 from core.database import get_db
+from core.mail import send_email
 
 from . import schemas
-from .mail import send_email_in_bg
 
 settings = get_settings()
 
@@ -58,19 +58,16 @@ class UserService(Services):
         """Отметить устаревшими прошлые регистрации пользователя."""
         self.db.query(models.Registrations).filter(
             models.Registrations.telegram_id == telegram_id
-        ).update({'is_obsolete': True}, synchronize_session='fetch')
+        ).update({'archived': True}, synchronize_session='fetch')
 
     def send_confirmation_code(self, registration: schemas.Registration):
         """Отправить письмо с кодом/ссылкой подтверждения регистрации."""
         email = registration.email
-        subject = 'Подтверждение регистрации'
+        subject = 'Нужно подтверждение регистрации в боте Яндекс.Практикума'
         template_body = dict(
-            title="Привет!",
-            h3="Подтвердите регистрацию кликнув по ссылке:",
-            confirmation_code=f"{registration.uuid}",
-            link=f"https://{settings.domain_address}?start={registration.uuid}",
+            link=f'https://{settings.domain_address}?start={registration.uuid}'
         )
-        send_email_in_bg(
+        send_email(
             self.background_tasks,
             recipients=[email],
             subject=subject,

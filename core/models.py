@@ -38,6 +38,6 @@ class Registrations(Base):
     telegram_id = Column(Integer, index=True)
     name = Column(String)
     email = Column(String, unique=False, index=True)
-    is_obsolete = Column(Boolean, default=False)
+    archived = Column(Boolean, default=False)
     created = Column(DateTime(), default=datetime.now)
     modified = Column(DateTime(), default=datetime.now, onupdate=datetime.now)

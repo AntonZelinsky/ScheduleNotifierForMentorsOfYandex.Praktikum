@@ -53,7 +53,7 @@ class RegistrationCreate(RegistrationBase):
 
 
 class Registration(RegistrationBase):
-    is_obsolete: bool
+    archived: bool
     uuid: Optional[UUID] = None
     created: datetime
     modified: datetime
