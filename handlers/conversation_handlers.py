@@ -4,6 +4,7 @@ from telegram import ParseMode, InlineKeyboardButton
 from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandler, MessageHandler, Filters
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
+from core.models import User
 from handlers import commands, states
 
 # Variables for user data
@@ -12,19 +13,22 @@ USERNAME = "username"
 TELEGRAM_ID = "user_telegram_id"
 
 
+def validate_user_registration(update, context):
+    """Validates user telegram id + confirmation code pair"""
+    user = User.objects.filter(id=update.effective_chat.id)
+    code = context.args[0]
+    if user and code == user.uuid:
+        # TODO: создаем запись в модели Registrations
+        logging.info(f"Пользователь {user.name} успешно зарегистрирован")
+        return states.MAIN
+    logging.info(f"Не удалось подтвердить регистрацию пользователя {user.name} c кодом {code}")
+    register_new_user(update, context)
+
+
 def start(update, context):
     """Entry point for signup dialogue, checks if deeplink argument exists"""
-    user_id = update.effective_chat.id
     if context.args:
-        print("Deeplink found!")
-        confirmation_code = context.args[0]
-        # псевдокод сверки:
-        # user = User.objects.filter(id=user_id)
-        # if user and confirmation_code == user.uuid -> успех, создаем запись в БД
-        # else (если код подтверждения неверный) -> запускаем процесс регистрации заново
-        logging.info(f"Сверяем код подтверждения {confirmation_code} с кодом пользователя {user_id}")
-        context.bot.send_message(chat_id=user_id, text="Регистрация успешно завершена")
-        return states.MAIN
+        validate_user_registration(update, context)
     return register_new_user(update, context)
 
 
