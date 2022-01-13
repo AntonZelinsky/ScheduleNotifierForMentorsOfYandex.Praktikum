@@ -6,7 +6,6 @@ from threading import Thread
 from pytz import timezone
 from telegram import ParseMode, Bot
 from telegram.ext import (CallbackContext,
-                          CommandHandler,
                           Updater,
                           Dispatcher,
                           JobQueue)
@@ -15,7 +14,7 @@ import notion
 from app.services import CohortService
 from core import config
 from core.database import SessionLocal
-from handlers.conversation_handlers import register_new_user, registration_conv
+from handlers.conversation_handlers import registration_conv
 from helpers import Objectify
 
 
