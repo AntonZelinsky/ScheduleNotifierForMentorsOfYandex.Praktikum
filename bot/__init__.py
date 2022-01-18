@@ -3,6 +3,7 @@ import logging
 from queue import Queue
 from threading import Thread
 
+import telegram.ext
 from pytz import timezone
 from telegram import ParseMode, Bot
 from telegram.ext import (CallbackContext,
@@ -19,6 +20,9 @@ from helpers import Objectify
 
 
 settings = config.get_settings()
+
+# Defining timezone of a bot for all datetime references (default is UTC)
+telegram.ext.Defaults(tzinfo=timezone("Europe/Warsaw"))
 
 
 def start(update, context):
@@ -97,10 +101,10 @@ def init():
     else:
         dispatcher = init_polling(token)
 
-    time = datetime.time(hour=settings.morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.datetime.strptime(settings.morning_reminder_hour, "%H:%M").time()
     dispatcher.job_queue.run_daily(callback_morning_reminder, time)
 
-    time = datetime.time(hour=settings.evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.datetime.strptime(settings.evening_reminder_hour, "%H:%M").time()
     dispatcher.job_queue.run_daily(callback_evening_reminder, time)
 
     dispatcher.add_handler(registration_conv)
