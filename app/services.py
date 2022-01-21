@@ -50,7 +50,7 @@ class UserService(Services):
         )
         self.db.add(registration)
         self.db.commit()
-        if registration.uuid:
+        if registration.confirmation_code:
             self.send_confirmation_code(registration)
         return registration
 
@@ -65,13 +65,15 @@ class UserService(Services):
         email = registration.email
         subject = 'Нужно подтверждение регистрации в боте Яндекс.Практикума'
         template_body = dict(
-            link=f'https://{settings.domain_address}?start={registration.uuid}'
+            link=f'https://{settings.domain_address}?'
+                 f'start={registration.confirmation_code}'
         )
         send_email(
             self.background_tasks,
             recipients=[email],
             subject=subject,
             template_body=template_body,
+            template_html='registration_confirmation.html',
         )
 
 

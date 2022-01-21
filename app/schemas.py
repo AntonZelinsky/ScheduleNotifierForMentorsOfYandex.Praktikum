@@ -54,7 +54,7 @@ class RegistrationCreate(RegistrationBase):
 
 class Registration(RegistrationBase):
     archived: bool
-    uuid: Optional[UUID] = None
+    confirmation_code: Optional[UUID] = None
     created: datetime
     modified: datetime
 

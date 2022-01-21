@@ -34,7 +34,8 @@ class Cohort(Base):
 class Registrations(Base):
     __tablename__ = "Registrations"
 
-    uuid = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    confirmation_code = Column(UUID(as_uuid=True),
+                               primary_key=True, default=uuid.uuid4)
     telegram_id = Column(Integer, index=True)
     name = Column(String)
     email = Column(String, unique=False, index=True)
