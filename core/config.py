@@ -51,8 +51,7 @@ class BaseConfig(BaseSettings):
 
 
 class DevelopmentConfig(BaseConfig):
-    sqlalchemy_database_url: \
-        str = 'postgresql://root:root@localhost:35432/schedule_notifier'
+    sqlalchemy_database_url: str = 'postgresql://root:root@localhost:35432/schedule_notifier'
 
 
 class ProductionConfig(BaseConfig):
