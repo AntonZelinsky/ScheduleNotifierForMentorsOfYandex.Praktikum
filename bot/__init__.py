@@ -3,21 +3,21 @@ import logging
 from queue import Queue
 from threading import Thread
 
+import telegram.ext
 from pytz import timezone
 from telegram import ParseMode, Bot
 from telegram.ext import (CallbackContext,
-                          CommandHandler,
                           Updater,
                           Dispatcher,
-                          JobQueue)
+                          JobQueue,
+                          Defaults)
 
 import notion
 from app.services import CohortService
 from core import config
 from core.database import SessionLocal
-from handlers.conversation_handlers import register_new_user, registration_conv
+from handlers.conversation_handlers import registration_conv
 from helpers import Objectify
-
 
 settings = config.get_settings()
 
@@ -65,8 +65,8 @@ def callback_evening_reminder(context: CallbackContext):
             logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
 
-def init_webhook(token, webhook_url):
-    bot = Bot(token)
+def init_webhook(token, webhook_url, defaults: Defaults):
+    bot = Bot(token, defaults=defaults)
     update_queue = Queue()
     job_queue = JobQueue()
     dispatcher = Dispatcher(bot, update_queue, job_queue=job_queue)
@@ -82,8 +82,8 @@ def init_webhook(token, webhook_url):
     return dispatcher
 
 
-def init_polling(token):
-    updater = Updater(token, use_context=True)
+def init_polling(token, defaults: Defaults):
+    updater = Updater(token, use_context=True, defaults=defaults)
     updater.start_polling()
 
     logging.info('Приложение успешно запущено через пулинг')
@@ -92,16 +92,18 @@ def init_polling(token):
 
 def init():
     token = settings.telegram_token
+    # Defining timezone of a bot for all datetime references (default is UTC)
+    defaults = telegram.ext.Defaults(tzinfo=timezone("Europe/Warsaw"))
     if settings.domain_address:
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
-        dispatcher = init_webhook(token, webhook_url)
+        dispatcher = init_webhook(token, webhook_url, defaults)
     else:
-        dispatcher = init_polling(token)
+        dispatcher = init_polling(token, defaults)
 
-    time = datetime.time(hour=settings.morning_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.datetime.strptime(settings.morning_reminder_hour, "%H:%M").time()
     dispatcher.job_queue.run_daily(callback_morning_reminder, time)
 
-    time = datetime.time(hour=settings.evening_reminder_hour, tzinfo=timezone("Europe/Warsaw"))
+    time = datetime.datetime.strptime(settings.evening_reminder_hour, "%H:%M").time()
     dispatcher.job_queue.run_daily(callback_evening_reminder, time)
 
     dispatcher.add_handler(registration_conv)
