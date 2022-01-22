@@ -1,17 +1,25 @@
 from uuid import UUID
 
-from fastapi import Depends, HTTPException
+from fastapi import BackgroundTasks, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from core import models
+from core.config import get_settings
 from core.database import get_db
+from core.mail import send_email
 
 from . import schemas
 
+settings = get_settings()
+
 
 class Services:
-    def __init__(self, db: Session = Depends(get_db)):
+    def __init__(self,
+                 background_tasks: BackgroundTasks,
+                 db: Session = Depends(get_db),
+                 ):
         self.db = db
+        self.background_tasks = background_tasks
 
 
 class UserService(Services):
@@ -31,6 +39,41 @@ class UserService(Services):
         self.db.add(db_user)
         self.db.commit()
         return db_user
+
+    def create_registration(self, registration: schemas.RegistrationCreate):
+        """Создать "заявку" на добавление пользователя."""
+        self.set_registration_obsolete(telegram_id=registration.telegram_id)
+        registration = models.Registrations(
+            name=registration.name,
+            email=registration.email,
+            telegram_id=registration.telegram_id,
+        )
+        self.db.add(registration)
+        self.db.commit()
+        self.send_confirmation_code(registration)
+        return registration
+
+    def set_registration_obsolete(self, telegram_id: int):
+        """Отметить устаревшими прошлые регистрации пользователя."""
+        self.db.query(models.Registrations).filter(
+            models.Registrations.telegram_id == telegram_id
+        ).update({'archived': True}, synchronize_session='fetch')
+
+    def send_confirmation_code(self, registration: schemas.Registration):
+        """Отправить письмо с кодом/ссылкой подтверждения регистрации."""
+        email = registration.email
+        subject = 'Нужно подтверждение регистрации в боте Яндекс.Практикума'
+        template_body = dict(
+            link=f'https://{settings.domain_address}?'
+                 f'start={registration.confirmation_code}'
+        )
+        send_email(
+            self.background_tasks,
+            recipients=[email],
+            subject=subject,
+            template_body=template_body,
+            template_html='registration_confirmation.html',
+        )
 
 
 class CohortService(Services):

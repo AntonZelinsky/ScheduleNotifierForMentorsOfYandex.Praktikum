@@ -40,3 +40,23 @@ class Cohort(CohortBase):
 
     class Config:
         orm_mode = True
+
+
+class RegistrationBase(BaseModel):
+    telegram_id: int
+    name: str
+    email: EmailStr
+
+
+class RegistrationCreate(RegistrationBase):
+    pass
+
+
+class Registration(RegistrationBase):
+    archived: bool
+    confirmation_code: Optional[UUID] = None
+    created: datetime
+    modified: datetime
+
+    class Config:
+        orm_mode = True

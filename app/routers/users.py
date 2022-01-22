@@ -21,6 +21,6 @@ class UserCBV:
     def read_users(self):
         return self.service.get_users(skip=self.skip, limit=self.limit)
 
-    @router.post("/", response_model=schemas.User)
-    def create_user(self, user: schemas.UserCreate):
-        return self.service.create_user(user=user)
+    @router.post("/", response_model=schemas.Registration)
+    def create_registration(self, user: schemas.RegistrationCreate):
+        return self.service.create_registration(registration=user)

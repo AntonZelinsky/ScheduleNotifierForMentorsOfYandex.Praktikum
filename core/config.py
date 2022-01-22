@@ -1,6 +1,28 @@
 from functools import lru_cache
 
+from fastapi_mail import ConnectionConfig
 from pydantic import BaseSettings
+
+
+class EmailConf(BaseSettings):
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int = 587
+    mail_server: str
+    mail_from_name: str
+    mail_tls: bool = False
+    mail_ssl: bool = True
+    use_credentials: bool = True
+    validate_certs: bool = True
+    template_folder: str = './app/templates'
+
+    class Config:
+        env_file = '.env'
+        env_file_encoding = 'utf-8'
+
+    def get_dict_upper_keys(self):
+        return dict((k.upper(), v) for k, v in self.__dict__.items())
 
 
 class BaseConfig(BaseSettings):
@@ -18,6 +40,10 @@ class BaseConfig(BaseSettings):
     domain_address: str = None
     port: int = 80
     sqlalchemy_database_url: str
+
+    @staticmethod
+    def email_conf():
+        return ConnectionConfig(**EmailConf().get_dict_upper_keys())
 
     class Config:
         env_file = '.env'
