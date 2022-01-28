@@ -6,7 +6,7 @@ from fastapi_utils.inferring_router import InferringRouter
 
 from app.services import UserService
 
-from .. import schemas
+from app import schemas
 
 router = InferringRouter()
 
