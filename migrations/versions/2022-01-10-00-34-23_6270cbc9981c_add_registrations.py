@@ -26,7 +26,6 @@ def upgrade():
     sa.Column('archived', sa.Boolean(), nullable=True),
     sa.Column('created', sa.DateTime(), nullable=True),
     sa.Column('modified', sa.DateTime(), nullable=True),
-    sa.PrimaryKeyConstraint('uuid')
     )
     op.create_index(op.f('ix_Registrations_email'), 'Registrations', ['email'], unique=False)
     op.create_index(op.f('ix_Registrations_telegram_id'), 'Registrations', ['telegram_id'], unique=False)
