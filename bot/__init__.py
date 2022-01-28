@@ -3,8 +3,9 @@ import logging
 from queue import Queue
 from threading import Thread
 
-import telegram.ext
+from fastapi import BackgroundTasks
 from pytz import timezone
+import telegram.ext
 from telegram import ParseMode, Bot
 from telegram.ext import (CallbackContext,
                           Updater,
@@ -13,7 +14,7 @@ from telegram.ext import (CallbackContext,
                           Defaults)
 
 import notion
-from app.services import CohortService
+from app.services import CohortService, UserService
 from core import config
 from core.database import SessionLocal
 from handlers.conversation_handlers import registration_conv
@@ -31,24 +32,26 @@ def start(update, context):
                  f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
 
 
-service: CohortService = CohortService(SessionLocal())
+cohort_service: CohortService = CohortService(BackgroundTasks(), SessionLocal())
+user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
 
 
 def callback_morning_reminder(context: CallbackContext):
-    cohorts = service.get_cohorts()
+    cohorts = cohort_service.get_cohorts()
     users = notion.get_users_data(cohorts)
 
     for user_data in users.values():
         user = Objectify(user_data)
-        if user.telegram_id:
-            # TODO Как сделать наличие telegram_id гарантированным?
-            # или будут разные каналы доставки?
-            # пока добавил __getattr__ в class Expando
-            context.bot.send_message(chat_id=user.telegram_id,
-                                     text=f'Доброе утро, {user.name}. Напоминаю, ты сегодня дежуришь.\n'
-                                          f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
-                                          'Желаю хорошего дня!')
-            logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
+        if user.email:
+            mentor = user_service.get_user_by_email(user.email)
+            if mentor:
+                context.bot.send_message(chat_id=mentor.telegram_id,
+                                         text=f'Доброе утро, {mentor.name}. Напоминаю, ты сегодня дежуришь.\n'
+                                              f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
+                                              'Желаю хорошего дня!')
+                logging.info(f'{user.name} c id {user.telegram_id} получил утреннее напоминание о дежурстве')
+            else:
+                logging.info(f'Дежурный с имейлом {user.email} не найден в базе данных')
 
 
 def callback_evening_reminder(context: CallbackContext):
