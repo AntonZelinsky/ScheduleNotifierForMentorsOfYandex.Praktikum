@@ -53,20 +53,17 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
 
             name = properties.Name.title
             if name:
-                print(name[0].plain_text)
+                # print(name[0].plain_text)
                 user_data.name = name[0].plain_text
 
-            # в таком видео выкидывает TypeError: 'Objectify' object is not subscriptable
-            # разобраться как распаковать инфу из поля Дежурный, в дебагере все properties есть
-            # email = properties['Дежурный'].people.person
-            email = properties.email.rich_text
+            email = properties.Дежурный.people[0].person.email
             if email:
-                print(email[0].plain_text)
-                user_data.email = email[0].plain_text
+                # print(email)
+                user_data.email = email
 
             telegram_id = properties.telegram_id.rich_text
             if telegram_id:
-                print(telegram_id[0].plain_text)
+                # print(telegram_id[0].plain_text)
                 user_data.telegram_id = telegram_id[0].plain_text
 
             users_raw_data.append(user_data)
