@@ -28,7 +28,7 @@ class UserService(Services):
             models.User.telegram_id == telegram_id).first() is None
 
     def get_user_by_email(self, email: str):
-        return self.db.query(models.User).filter(models.User.email == email)
+        return self.db.query(models.User).filter(models.User.email == email).all()
 
     def get_users(self, skip: int = 0, limit: int = 100):
         return self.db.query(models.User).offset(skip).limit(limit).all()
