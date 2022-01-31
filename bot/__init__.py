@@ -45,35 +45,33 @@ def fetch_mentor_from_database(context: CallbackContext):
 
     for user_data in users.values():
         user = Objectify(user_data)
-        mentors = user_service.get_user_by_email(user.email)
-        if mentors:
-            return mentors, cohorts, user
+        mentor = user_service.get_user_by_email(user.email)
+        if mentor:
+            return mentor, cohorts, user
         else:
             logging.error(f'Дежурный с имейлом {user.email} не найден в базе данных')
 
 
 def callback_morning_reminder(context: CallbackContext):
     try:
-        mentors, cohorts, user = fetch_mentor_from_database(context)
-        for mentor in mentors:
-            context.bot.send_message(chat_id=mentor.telegram_id,
-                                     text=f'Доброе утро, {mentor.name}. Напоминаю, ты сегодня дежуришь.\n'
-                                          f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
-                                          'Желаю хорошего дня!')
-            logging.info(f'{mentor.name} c id {mentor.telegram_id} получил утреннее напоминание о дежурстве')
+        mentor, cohorts, user = fetch_mentor_from_database(context)
+        context.bot.send_message(chat_id=mentor.telegram_id,
+                                 text=f'Доброе утро, {mentor.name}. Напоминаю, ты сегодня дежуришь.\n'
+                                      f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
+                                      'Желаю хорошего дня!')
+        logging.info(f'{mentor.name} c id {mentor.telegram_id} получил утреннее напоминание о дежурстве')
     except ValueError:
         logging.error(f'Что-то пошло не так. Не удалось распаковать данные о пользователе из ноушена.')
 
 
 def callback_evening_reminder(context: CallbackContext):
     try:
-        mentors, cohorts, user = fetch_mentor_from_database(context)
-        for mentor in mentors:
-            context.bot.send_message(chat_id=mentor.telegram_id,
-                                     text=f'Добрый вечер, {mentor.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n'
-                                          f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
-                                          'Спокойной ночи!')
-            logging.info(f'{mentor.name} c id {mentor.telegram_id} получил вечернее напоминание о дежурстве')
+        mentor, cohorts, user = fetch_mentor_from_database(context)
+        context.bot.send_message(chat_id=mentor.telegram_id,
+                                 text=f'Добрый вечер, {mentor.name}. Ещё раз напоминаю, ты сегодня дежуришь.\n'
+                                      f'В {" и ".join([cohort.name for cohort in user.databases])}\n\n'
+                                      'Спокойной ночи!')
+        logging.info(f'{mentor.name} c id {mentor.telegram_id} получил вечернее напоминание о дежурстве')
     except ValueError:
         logging.error(f'Что-то пошло не так. Не удалось распаковать данные о пользователе из ноушена.')
 
