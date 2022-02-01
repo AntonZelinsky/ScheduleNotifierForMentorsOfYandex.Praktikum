@@ -154,6 +154,7 @@ def find_cycle_by_last_duties(last_duties: tuple) -> tuple:
     """
     cycle = []
     for i, mentor_id in enumerate(last_duties):
+        # TODO: возможно ли одним запросом получить юзеров в список, и в цикле уже его использовать?
         user = user_service.get_user_by_notion_id(mentor_id)
         if user in cycle:
             break
@@ -178,6 +179,7 @@ def make_timeline(cycle: tuple, start_date: str, set_interval: int) -> list:
     return future_duties
 
 
+# TODO: Добавить обработку исключений
 def add_duties_to_cohort(cohort: Cohort, set_interval: int = 7):
     """
     Генерировать расписание для когорты
@@ -193,6 +195,7 @@ def add_duties_to_cohort(cohort: Cohort, set_interval: int = 7):
 
     added = []
     for duty in timeline:
+        # TODO: возможно ли одним запросом добавить все необходимые страницы?
         response = client.pages.create(
             **{
                 "parent": {
