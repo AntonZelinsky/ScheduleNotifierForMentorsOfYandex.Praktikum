@@ -243,7 +243,7 @@ def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
                             "text": [{
                                 "type": "text",
                                 "text": {
-                                    "content": "Автосгенерированое"
+                                    "content": "Автосгенерированное"
                                 }
                             }],
                             "icon": {
