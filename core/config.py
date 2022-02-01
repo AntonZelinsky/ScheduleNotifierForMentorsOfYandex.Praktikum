@@ -35,11 +35,14 @@ class BaseConfig(BaseSettings):
     debug: bool = True
     telegram_token: str
     notion_token: str
-    morning_reminder_hour: str = '10:30'
+    morning_reminder_hour: str = '14:40'
     evening_reminder_hour: str = '20:15'
     domain_address: str = None
     port: int = 80
     sqlalchemy_database_url: str
+    schedule_extension_max_days: int = 14
+    schedule_extension_time: str = '21:21'
+    schedule_extension_weekdays: tuple = (6,)  # воскресенье
 
     @staticmethod
     def email_conf():

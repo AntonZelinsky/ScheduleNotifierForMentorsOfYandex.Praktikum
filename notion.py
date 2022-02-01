@@ -1,4 +1,5 @@
 import datetime
+import logging
 
 from dateutil.parser import parse
 from fastapi import BackgroundTasks
@@ -162,15 +163,15 @@ def find_cycle_by_last_duties(last_duties: tuple) -> tuple:
     return tuple(reversed(cycle))
 
 
-def make_timeline(cycle: tuple, start_date: str, set_interval: int) -> list:
+def make_timeline(cycle: tuple, start_date: str, set_period: int) -> list:
     """
     Сделать список-таймлайн. В списке на каждую дату назначен наставник.
     :param cycle: цикл дежурств,
     :param start_date: крайняя дата заполненного расписания,
-    :param set_interval: кол-во дней добавляемых к расписанию,
+    :param set_period: кол-во дней добавляемых к расписанию,
     :return: Список расписание на :set_interval дней, от :start_date + 1. На каждую дату назначен наставник.
     """
-    future_duties = [None] * set_interval
+    future_duties = [None] * set_period
     duty_date = start_date
     for i, v in enumerate(future_duties):
         duty_date += datetime.timedelta(days=1)
@@ -180,18 +181,26 @@ def make_timeline(cycle: tuple, start_date: str, set_interval: int) -> list:
 
 
 # TODO: Добавить обработку исключений
-def add_duties_to_cohort(cohort: Cohort, set_interval: int = 7):
+def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
     """
     Генерировать расписание для когорты
     :param cohort: когорта
-    :param set_interval: кол-во дней добавляемых к расписанию,
+    :param max_days: кол-во дней добавляемых к расписанию,
     :return: список добавленных ноушен страниц
     """
     client = create_client()
 
     last_duties = get_last_duties_by_cohort(cohort)
+
+    need_days = datetime.date.today() + datetime.timedelta(days=max_days) - last_duties['actual_date']
+    need_days = need_days.days
+    if need_days < 1:
+        logging.info(f'Когорта "{cohort.name}" не нуждается в продлении расписания. '
+                     f'Похоже, оно уже заполнено как минимум на {max_days} дней вперед.')
+        return False
+
     cycle = find_cycle_by_last_duties(last_duties['last_mentors_ids'])
-    timeline = make_timeline(cycle, last_duties['actual_date'], set_interval)
+    timeline = make_timeline(cycle, last_duties['actual_date'], need_days)
 
     added = []
     for duty in timeline:
@@ -225,7 +234,24 @@ def add_duties_to_cohort(cohort: Cohort, set_interval: int = 7):
                             }
                         ]
                     }
-                }
+                },
+                "children": [
+                    {
+                        "object": "block",
+                        "type": "callout",
+                        "callout": {
+                            "text": [{
+                                "type": "text",
+                                "text": {
+                                    "content": "Автосгенерированое"
+                                }
+                            }],
+                            "icon": {
+                                "emoji": "🤖"
+                            }
+                        }
+                    }
+                ]
             }
         )
         added.append(response['id'])
