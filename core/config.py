@@ -35,7 +35,7 @@ class BaseConfig(BaseSettings):
     debug: bool = True
     telegram_token: str
     notion_token: str
-    morning_reminder_hour: str = '14:40'
+    morning_reminder_hour: str = '10:30'
     evening_reminder_hour: str = '20:15'
     domain_address: str = None
     port: int = 80
