@@ -1,12 +1,16 @@
 import datetime
-from dateutil.parser import parse
 
+from dateutil.parser import parse
+from fastapi import BackgroundTasks
 from notion_client import APIResponseError, Client
-from core import models
+
+from app.services import UserService
 from core.config import get_settings
 from core.database import SessionLocal
 from core.models import Cohort
 from helpers import Expando, Objectify
+
+user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
 
 
 def create_client():
@@ -103,8 +107,8 @@ def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
     :param count_days: количество дней для расчета,
     :return:
         {
-            'last_mentors_ids': tuple, крайние дежурства
-            'actual_date': date(%Y-%m-%d), крайняя заполненая дата (%Y-%m-%d)
+            'last_mentors_ids': tuple, крайние дежурства. **Порядок обратный --** от последнего к первому.
+            'actual_date': date(%Y-%m-%d), крайняя заполненная дата (%Y-%m-%d)
         }
     """
     client = create_client()
@@ -140,62 +144,86 @@ def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
     return last_mentors
 
 
-def calculate_cycle_by_last_duties(last_duties: tuple) -> tuple:
+def find_cycle_by_last_duties(last_duties: tuple) -> tuple:
     """
-    Получить цикл из последовательности.
+    Получить цикл дежурств наставнико из последовательности крайних дежурств.
     Подразумеваем, что цикл точно есть, минимум 1.
     Что последовательность из элементов по одному.
-    Движение от 0-го элемента к последнему.
-    :return: tuple
+    Последовательность дана **в обратном порядке.**
+    :return: tuple. Вернуть **в прямом порядке.**
     """
-    cycle = set()
-    for mentor in last_duties:
-        if mentor not in cycle:
-            cycle.add(mentor)
-        else:
+    cycle = []
+    for i, mentor_id in enumerate(last_duties):
+        user = user_service.get_user_by_notion_id(mentor_id)
+        if user in cycle:
             break
-    return tuple(cycle)
+        cycle.insert(i, user)
+    return tuple(reversed(cycle))
 
 
-def add_duties_to_cohort(cohort: Cohort, cycle: tuple, start_date: str, set_interval: int = 7):
-    client = create_client()
+def make_timeline(cycle: tuple, start_date: str, set_interval: int) -> list:
+    """
+    Сделать список-таймлайн. В списке на каждую дату назначен наставник.
+    :param cycle: цикл дежурств,
+    :param start_date: крайняя дата заполненного расписания,
+    :param set_interval: кол-во дней добавляемых к расписанию,
+    :return: Список расписание на :set_interval дней, от :start_date + 1. На каждую дату назначен наставник.
+    """
     future_duties = [None] * set_interval
     duty_date = start_date
-    for i, mentor in enumerate(future_duties):
+    for i, v in enumerate(future_duties):
         duty_date += datetime.timedelta(days=1)
         future_duties[i] = (dict(mentor=cycle[i % len(cycle)], date=duty_date))
 
     return future_duties
-    # response = client.pages.create(
-    #     **{
-    #         "parent": {
-    #             "database_id": str(cohort.notion_db_id)
-    #         },
-    #         "properties": {
-    #             "Дата": {
-    #                 "date": {
-    #                     "start": "2022-02-13",
-    #                     "end": None
-    #                 }
-    #             },
-    #             "Name": {
-    #                 "title": [
-    #                     {
-    #                         "text": {
-    #                             "content": "Александр"
-    #                         }
-    #                     }
-    #                 ]
-    #             },
-    #             "Дежурный": {
-    #                 "people": [
-    #                     {
-    #                         "object": "user",
-    #                         "id": "134d1a34-7876-4cb5-8493-2875f6751a86"
-    #                     }
-    #                 ]
-    #             }
-    #         }
-    #     }
-    # )
-    # return future_duties
+
+
+def add_duties_to_cohort(cohort: Cohort, set_interval: int = 7):
+    """
+    Генерировать расписание для когорты
+    :param cohort: когорта
+    :param set_interval: кол-во дней добавляемых к расписанию,
+    :return: список добавленных ноушен страниц
+    """
+    client = create_client()
+
+    last_duties = get_last_duties_by_cohort(cohort)
+    cycle = find_cycle_by_last_duties(last_duties['last_mentors_ids'])
+    timeline = make_timeline(cycle, last_duties['actual_date'], set_interval)
+
+    added = []
+    for duty in timeline:
+        response = client.pages.create(
+            **{
+                "parent": {
+                    "database_id": str(cohort.notion_db_id)
+                },
+                "properties": {
+                    "Дата": {
+                        "date": {
+                            "start": duty['date'].isoformat(),
+                            "end": None
+                        }
+                    },
+                    "Name": {
+                        "title": [
+                            {
+                                "text": {
+                                    "content": duty['mentor'].name
+                                }
+                            }
+                        ]
+                    },
+                    "Дежурный": {
+                        "people": [
+                            {
+                                "object": "user",
+                                "id": str(duty['mentor'].notion_user_id)
+                            }
+                        ]
+                    }
+                }
+            }
+        )
+        added.append(response['id'])
+    return added

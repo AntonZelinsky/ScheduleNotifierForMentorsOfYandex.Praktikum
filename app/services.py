@@ -75,6 +75,9 @@ class UserService(Services):
             template_html='registration_confirmation.html',
         )
 
+    def get_user_by_notion_id(self, notion_user_id: UUID):
+        return self.db.query(models.User).filter_by(notion_user_id=notion_user_id).first()
+
 
 class CohortService(Services):
     def get_cohorts(self, skip: int = 0, limit: int = 100):

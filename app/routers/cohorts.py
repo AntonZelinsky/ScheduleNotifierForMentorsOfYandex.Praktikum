@@ -30,7 +30,5 @@ class CohortCBV:
     def cycle(self):
         cohorts = self.service.get_cohorts(skip=self.skip, limit=self.limit)
         # for cohort in cohorts:
-        last_duties = notion.get_last_duties_by_cohort(cohorts[1])
-        cycle = notion.calculate_cycle_by_last_duties(last_duties['last_mentors_ids'])
-        added_duties = notion.add_duties_to_cohort(cohorts[1], cycle, last_duties['actual_date'])
-        return added_duties
+        added = notion.add_duties_to_cohort(cohorts[1])
+        return added
