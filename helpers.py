@@ -1,3 +1,6 @@
+import datetime
+
+
 class Objectify:
     def __init__(self, in_dict: dict):
         assert isinstance(in_dict, dict)
@@ -11,3 +14,7 @@ class Objectify:
 class Expando(object):
     def __getattr__(self, attrname):
         return None
+
+
+def strptime(str_time):
+    return datetime.datetime.strptime(str_time, '%H:%M').time()
