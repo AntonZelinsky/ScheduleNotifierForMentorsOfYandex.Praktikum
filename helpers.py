@@ -16,5 +16,5 @@ class Expando(object):
         return None
 
 
-def strptime(str_time):
+def str_to_time(str_time):
     return datetime.datetime.strptime(str_time, '%H:%M').time()

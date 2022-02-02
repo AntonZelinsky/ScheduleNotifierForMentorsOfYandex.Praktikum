@@ -43,6 +43,7 @@ class BaseConfig(BaseSettings):
     schedule_extension_max_days: int = 14
     schedule_extension_time: str = '21:21'
     schedule_extension_weekdays: tuple = (6,)  # воскресенье
+    timezone: str = 'Europe/Warsaw'
 
     @staticmethod
     def email_conf():

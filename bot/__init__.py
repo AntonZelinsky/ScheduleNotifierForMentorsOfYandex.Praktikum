@@ -10,7 +10,7 @@ from telegram.ext import Updater, Dispatcher, JobQueue, Defaults
 from bot import callbacks
 from core import config
 from handlers.conversation_handlers import registration_conv
-from helpers import strptime
+from helpers import str_to_time
 
 settings = config.get_settings()
 
@@ -51,8 +51,8 @@ def init_polling(token, defaults: Defaults):
 
 def init():
     token = settings.telegram_token
-    # Defining timezone of a bot for all datetime references (default is UTC)
-    defaults = telegram.ext.Defaults(tzinfo=timezone('Europe/Moscow'))
+
+    defaults = telegram.ext.Defaults(tzinfo=timezone(settings.timezone))
     if settings.domain_address:
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url, defaults)
@@ -61,17 +61,17 @@ def init():
 
     dispatcher.job_queue.run_daily(
         callback=callbacks.morning_reminder_callback,
-        time=strptime(settings.morning_reminder_hour),
+        time=str_to_time(settings.morning_reminder_hour),
     )
 
     dispatcher.job_queue.run_daily(
         callback=callbacks.evening_reminder_callback,
-        time=strptime(settings.evening_reminder_hour),
+        time=str_to_time(settings.evening_reminder_hour),
     )
 
     dispatcher.job_queue.run_daily(
         callback=callbacks.continue_schedule,
-        time=strptime(settings.schedule_extension_time),
+        time=str_to_time(settings.schedule_extension_time),
         days=settings.schedule_extension_weekdays,
     )
 

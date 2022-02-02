@@ -147,7 +147,7 @@ def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
 
 def find_cycle_by_last_duties(last_duties: tuple) -> tuple:
     """
-    Получить цикл дежурств наставнико из последовательности крайних дежурств.
+    Получить цикл дежурств наставников из последовательности крайних дежурств.
     Подразумеваем, что цикл точно есть, минимум 1.
     Что последовательность из элементов по одному.
     Последовательность дана **в обратном порядке.**
@@ -204,7 +204,6 @@ def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
 
     added = []
     for duty in timeline:
-        # TODO: возможно ли одним запросом добавить все необходимые страницы?
         response = client.pages.create(
             **{
                 "parent": {
