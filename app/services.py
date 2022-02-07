@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import BackgroundTasks, Depends, HTTPException
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from core import models
@@ -27,7 +28,7 @@ class UserService(Services):
         return not self.db.query(models.User).filter(
             models.User.telegram_id == telegram_id).first() is None
 
-    def get_user_by_email(self, email: str):
+    def get_user_by_email(self, email: EmailStr):
         return self.db.query(models.User).filter(models.User.email == email).first()
 
     def get_users(self, skip: int = 0, limit: int = 100):

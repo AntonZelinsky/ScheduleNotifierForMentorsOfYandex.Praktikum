@@ -16,17 +16,11 @@ def create_client():
     return client
 
 
-def get_users_data(cohorts: list[Cohort]) -> dict:
-    raw_data = get_users_raw_data(cohorts)
-    users_data = group_by_user_raw_data(raw_data)
-    return users_data
-
-
-def get_users_raw_data(cohorts: list[Cohort]) -> list:
-    """Получить все дежурства во всех таблицах на сегодня."""
+def get_mentors_on_duty(cohorts: list[Cohort]) -> dict:
+    """Returns a dict of all on-duty mentors and their cohorts for today. Example: {mentor: [cohort1, cohort2]}"""
     client = create_client()
     date = datetime.date.today().__str__()
-    users_raw_data = list()
+    mentors_on_duty = dict()
     for notion_database in cohorts:
         try:
             response = client.databases.query(
@@ -55,22 +49,9 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
             except AttributeError:
                 logging.error(f'Не найдено поле email среди данных, полученных из Notion.\n{properties}')
 
-            users_raw_data.append(user_data)
+            if user_data.email in mentors_on_duty:
+                mentors_on_duty[user_data.email].append(user_data.database)
+            else:
+                mentors_on_duty[user_data.email] = [user_data.database]
 
-    return users_raw_data
-
-
-def group_by_user_raw_data(raw_data: list) -> dict:
-    """Сгруппировать всех дежурных по юзерам,
-    т.к. один юзер может дежурить в нескольких когортах."""
-    users_group_data = {}
-    for user_data in raw_data:
-        if user_data.email in users_group_data:
-            users_group_data[user_data.email] \
-                .append(user_data.database)
-        else:
-            user_dist_data = {
-                user_data.email: [user_data.database],
-            }
-            users_group_data.update(user_dist_data)
-    return users_group_data
+    return mentors_on_duty
