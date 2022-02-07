@@ -1,9 +1,8 @@
 import datetime
+import logging
 
 from notion_client import APIResponseError, Client
-from core import models
 from core.config import get_settings
-from core.database import SessionLocal
 from core.models import Cohort
 from helpers import Expando, Objectify
 
@@ -48,23 +47,13 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
         for item in response.results:
             properties = item.properties
             user_data = Expando()
-            # TODO назвать человечнее
             user_data.database = notion_database
 
-            name = properties.Name.title
-            if name:
-                # print(name[0].plain_text)
-                user_data.name = name[0].plain_text
-
             email = properties.Дежурный.people[0].person.email
-            if email:
-                # print(email)
+            try:
                 user_data.email = email
-
-            telegram_id = properties.telegram_id.rich_text
-            if telegram_id:
-                # print(telegram_id[0].plain_text)
-                user_data.telegram_id = telegram_id[0].plain_text
+            except AttributeError:
+                logging.error(f'Не найдено поле email среди данных, полученных из Notion.\n{properties}')
 
             users_raw_data.append(user_data)
 
@@ -77,16 +66,11 @@ def group_by_user_raw_data(raw_data: list) -> dict:
     users_group_data = {}
     for user_data in raw_data:
         if user_data.email in users_group_data:
-            users_group_data[user_data.email]['databases'] \
+            users_group_data[user_data.email] \
                 .append(user_data.database)
         else:
             user_dist_data = {
-                user_data.email: {
-                    'name': user_data.name,
-                    'email': user_data.email,
-                    'telegram_id': user_data.telegram_id,
-                    'databases': [user_data.database]
-                }
+                user_data.email: [user_data.database],
             }
             users_group_data.update(user_dist_data)
     return users_group_data
