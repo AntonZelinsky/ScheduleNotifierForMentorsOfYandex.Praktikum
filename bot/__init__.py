@@ -5,20 +5,15 @@ from threading import Thread
 
 from fastapi import BackgroundTasks
 from pytz import timezone
-import telegram.ext
-from telegram import ParseMode, Bot
-from telegram.ext import (CallbackContext,
-                          Updater,
-                          Dispatcher,
-                          JobQueue,
-                          Defaults)
+from telegram import Bot, ParseMode
+from telegram.ext import (CallbackContext, Defaults, Dispatcher, JobQueue,
+                          Updater)
 
 import notion
 from app.services import CohortService, UserService
 from core import config
 from core.database import SessionLocal
 from handlers.conversation_handlers import registration_conv
-from helpers import Objectify
 
 settings = config.get_settings()
 
@@ -37,35 +32,41 @@ user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
 
 
 def callback_morning_reminder(context: CallbackContext):
-    cohorts = cohort_service.get_cohorts()
-    users = notion.get_mentors_on_duty(cohorts)
+    try:
+        notion_cohorts = cohort_service.get_cohorts()
+        mentors_on_duty = notion.get_mentors_on_duty(notion_cohorts)
 
-    for user in users:
-        try:
-            mentor = user_service.get_user_by_email(user)
-            context.bot.send_message(chat_id=mentor.telegram_id,
-                                     text=f'Доброе утро, {mentor.name}.\nНапоминаю, ты сегодня дежуришь.\n'
-                                          f'Студенты {", ".join([str(cohort.id) for cohort in users[user]])} когорты '
-                                          'ждут тебя!\n\nЖелаю хорошего дня!')
-            logging.info(f'{mentor.name} c id {mentor.telegram_id} получил утреннее напоминание о дежурстве')
-        except AttributeError:
-            logging.error(f'Пользователь с имейлом {user} не найден в БД')
+        for email, cohorts in mentors_on_duty.items():
+            try:
+                mentor = user_service.get_user_by_email(email)
+                context.bot.send_message(chat_id=mentor.telegram_id,
+                                         text=f'Доброе утро, {mentor.name}.\nНапоминаю, ты сегодня дежуришь.\n'
+                                              f'Студенты {", ".join([str(cohort.id) for cohort in cohorts])} когорты '
+                                              'ждут тебя!\n\nЖелаю хорошего дня!')
+                logging.info(f'{mentor.name} c id {mentor.telegram_id} получил утреннее напоминание о дежурстве')
+            except AttributeError:
+                logging.error(f'Пользователь с имейлом {email} не найден в БД')
+    except Exception as e:
+        logging.error(f'Бот не смог отправить утреннее напоминание\n{e}')
 
 
 def callback_evening_reminder(context: CallbackContext):
-    cohorts = cohort_service.get_cohorts()
-    users = notion.get_mentors_on_duty(cohorts)
+    try:
+        notion_cohorts = cohort_service.get_cohorts()
+        mentors_on_duty = notion.get_mentors_on_duty(notion_cohorts)
 
-    for user in users:
-        try:
-            mentor = user_service.get_user_by_email(user)
-            context.bot.send_message(chat_id=mentor.telegram_id,
-                                     text=f'Добрый вечер, {mentor.name}.\nЕщё раз напоминаю, ты сегодня дежуришь.\n'
-                                          f'Студенты {", ".join([str(cohort.id) for cohort in users[user]])} когорты '
-                                          'ждут тебя!\n\nСпокойной ночи!')
-            logging.info(f'{mentor.name} c id {mentor.telegram_id} получил вечернее напоминание о дежурстве')
-        except AttributeError:
-            logging.error(f'Пользователь с имейлом {user} не найден в БД')
+        for email, cohorts in mentors_on_duty.items():
+            try:
+                mentor = user_service.get_user_by_email(email)
+                context.bot.send_message(chat_id=mentor.telegram_id,
+                                         text=f'Добрый вечер, {mentor.name}.\nЕщё раз напоминаю, ты сегодня дежуришь.\n'
+                                              f'Студенты {", ".join([str(cohort.id) for cohort in cohorts])} когорты '
+                                              'ждут тебя!\n\nСпокойной ночи!')
+                logging.info(f'{mentor.name} c id {mentor.telegram_id} получил вечернее напоминание о дежурстве')
+            except AttributeError:
+                logging.error(f'Пользователь с имейлом {email} не найден в БД')
+    except Exception as e:
+        logging.error(f'Бот не смог отправить вечернее напоминание\n{e}')
 
 
 def init_webhook(token, webhook_url, defaults: Defaults):
@@ -96,7 +97,7 @@ def init_polling(token, defaults: Defaults):
 def init():
     token = settings.telegram_token
     # Defining timezone of a bot for all datetime references (default is UTC)
-    defaults = telegram.ext.Defaults(tzinfo=timezone("Europe/Warsaw"))
+    defaults = Defaults(tzinfo=timezone("Europe/Warsaw"))
     if settings.domain_address:
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url, defaults)
