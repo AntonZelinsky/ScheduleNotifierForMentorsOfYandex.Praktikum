@@ -3,7 +3,6 @@ import logging
 
 from notion_client import APIResponseError, Client
 
-from app.exceptions import EmailNotFoundError
 from core.config import get_settings
 from core.models import Cohort
 from helpers import Expando, Objectify
@@ -56,14 +55,7 @@ def get_mentors_on_duty(cohorts: list[Cohort]) -> dict:
             user_data = Expando()
             user_data.database = notion_database
 
-            email = properties.Дежурный.people[0].person.email
-            try:
-                user_data.email = email
-            except Exception as e:
-                logging.error(f'Не удалось найти email в ответе от API: {properties.Дежурный.people[0]}')
-                print(e)
-                raise EmailNotFoundError('Поле email - обязательное!')
-
+            user_data.email = properties.Дежурный.people[0].person.email
             if user_data.email in mentors_on_duty:
                 mentors_on_duty[user_data.email].append(user_data.database)
             else:

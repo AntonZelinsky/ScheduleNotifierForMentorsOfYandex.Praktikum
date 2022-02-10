@@ -1,2 +1,0 @@
-class EmailNotFoundError(Exception):
-    pass
