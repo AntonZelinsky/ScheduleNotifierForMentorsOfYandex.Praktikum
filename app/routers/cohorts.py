@@ -4,9 +4,8 @@ from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
+from app import schemas
 from app.services import CohortService
-
-from .. import schemas
 
 router = InferringRouter()
 
