@@ -9,7 +9,6 @@ from core import config
 from core.database import SessionLocal
 from helpers import Objectify
 
-
 settings = config.get_settings()
 cohort_service: CohortService = CohortService(BackgroundTasks(), SessionLocal())
 
@@ -45,7 +44,7 @@ def evening_reminder_callback(context: CallbackContext):
             logging.info(f'{user.name} c id {user.telegram_id} получил вечернее напоминание о дежурстве')
 
 
-def continue_schedule(context: CallbackContext):
+def continue_schedule_callback(context: CallbackContext):
     max_days = settings.schedule_extension_max_days
     cohorts = cohort_service.get_cohorts()
     for cohort in cohorts:

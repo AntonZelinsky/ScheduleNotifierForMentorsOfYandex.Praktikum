@@ -5,6 +5,7 @@ from dateutil.parser import parse
 from fastapi import BackgroundTasks
 from notion_client import APIResponseError, Client
 
+from app.schemas import DutyPageCreate
 from app.services import UserService
 from core.config import get_settings
 from core.database import SessionLocal
@@ -36,7 +37,7 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
     users_raw_data = list()
     for notion_database in cohorts:
         try:
-            response = client.databases.query(
+            responseus = client.databases.query(
                 **{
                     "database_id": notion_database.notion_db_id,
                     "filter": {
@@ -47,7 +48,7 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
                     },
                 }
             )
-            response = Objectify(response)
+            response = Objectify(responseus)
         except APIResponseError as e:
             raise ValueError(f'Notion fell: {e}')
 
@@ -112,28 +113,17 @@ def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
             'actual_date': date(%Y-%m-%d), крайняя заполненная дата (%Y-%m-%d)
         }
     """
-    client = create_client()
     date_now = datetime.date.today().__str__()
-    response = client.databases.query(
-        **{
-            "database_id": cohort.notion_db_id,
-            "filter": {
-                "property": "Дата",
-                "date": {
-                    "on_or_after": date_now
-                }
-            },
-            "sorts": [{
-                "property": "Дата",
-                "timestamp": "created_time",
-                "direction": "descending"
-            }],
-            "page_size": count_days
-        }
+    databases_duties = query_databases_duties(
+        database_id=cohort.notion_db_id,
+        date=date_now,
+        page_size=count_days,
     )
-    response = Objectify(response)
 
-    last_duties = [duty.properties for duty in response.results]
+    if len(databases_duties) < 2:
+        logging.error('Недостаточно данных для расчета расписания. Нужен минимум один цикл дежурств в будущем.')
+        return False
+    last_duties = [duty.properties for duty in databases_duties]
     last_duties = sorted(last_duties, key=lambda duty: duty.Дата.date.start, reverse=True)
     actual_date = parse(last_duties[0].Дата.date.start).date()
     last_mentors_ids = tuple(duty.Дежурный.people[0].id for duty in last_duties)
@@ -188,9 +178,10 @@ def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
     :param max_days: кол-во дней добавляемых к расписанию,
     :return: список добавленных ноушен страниц
     """
-    client = create_client()
 
     last_duties = get_last_duties_by_cohort(cohort)
+    if not last_duties:
+        return False
 
     need_days = datetime.date.today() + datetime.timedelta(days=max_days) - last_duties['actual_date']
     need_days = need_days.days
@@ -204,54 +195,90 @@ def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
 
     added = []
     for duty in timeline:
-        response = client.pages.create(
-            **{
-                "parent": {
-                    "database_id": str(cohort.notion_db_id)
-                },
-                "properties": {
-                    "Дата": {
-                        "date": {
-                            "start": duty['date'].isoformat(),
-                            "end": None
-                        }
-                    },
-                    "Name": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": duty['mentor'].name
-                                }
-                            }
-                        ]
-                    },
-                    "Дежурный": {
-                        "people": [
-                            {
-                                "object": "user",
-                                "id": str(duty['mentor'].notion_user_id)
-                            }
-                        ]
-                    }
-                },
-                "children": [
-                    {
-                        "object": "block",
-                        "type": "callout",
-                        "callout": {
-                            "text": [{
-                                "type": "text",
-                                "text": {
-                                    "content": "Автосгенерированное"
-                                }
-                            }],
-                            "icon": {
-                                "emoji": "🤖"
-                            }
-                        }
-                    }
-                ]
-            }
-        )
-        added.append(response['id'])
+        added_page_id = create_duty_page(DutyPageCreate(
+            database_id=cohort.notion_db_id,
+            date=duty['date'].isoformat(),
+            mentor_name=duty['mentor'].name,
+            notion_user_id=duty['mentor'].notion_user_id,
+        ))
+        added.append(added_page_id)
     return added
+
+
+def create_duty_page(duty_page: DutyPageCreate) -> int:
+    client = create_client()
+
+    response = client.pages.create(
+        **{
+            "parent": {
+                "database_id": str(duty_page.database_id)
+            },
+            "properties": {
+                "Дата": {
+                    "date": {
+                        "start": str(duty_page.date),
+                        "end": None
+                    }
+                },
+                "Name": {
+                    "title": [
+                        {
+                            "text": {
+                                "content": duty_page.mentor_name
+                            }
+                        }
+                    ]
+                },
+                "Дежурный": {
+                    "people": [
+                        {
+                            "object": "user",
+                            "id": str(duty_page.notion_user_id)
+                        }
+                    ]
+                }
+            },
+            "children": [
+                {
+                    "object": "block",
+                    "type": "callout",
+                    "callout": {
+                        "text": [{
+                            "type": "text",
+                            "text": {
+                                "content": "Автосгенерированное"
+                            }
+                        }],
+                        "icon": {
+                            "emoji": "🤖"
+                        }
+                    }
+                }
+            ]
+        }
+    )
+    return response['id']
+
+
+def query_databases_duties(database_id: str, date: str, page_size: int) -> list:
+    client = create_client()
+
+    response = client.databases.query(
+        **{
+            "database_id": database_id,
+            "filter": {
+                "property": "Дата",
+                "date": {
+                    "on_or_after": date
+                }
+            },
+            "sorts": [{
+                "property": "Дата",
+                "timestamp": "created_time",
+                "direction": "descending"
+            }],
+            "page_size": page_size
+        }
+    )
+    response = Objectify(response)
+    return response.results

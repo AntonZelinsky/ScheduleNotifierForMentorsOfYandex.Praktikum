@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -60,3 +60,10 @@ class Registration(RegistrationBase):
 
     class Config:
         orm_mode = True
+
+
+class DutyPageCreate(BaseModel):
+    database_id: UUID
+    date: date
+    mentor_name: str
+    notion_user_id: UUID

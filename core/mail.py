@@ -7,12 +7,12 @@ settings = get_settings()
 
 
 def send_email(
-          background_tasks: BackgroundTasks,
-          recipients: list,
-          subject: str,
-          template_body: dict,
-          template_html,
-        ) -> None:
+    background_tasks: BackgroundTasks,
+    recipients: list,
+    subject: str,
+    template_body: dict,
+    template_html,
+) -> None:
     message = MessageSchema(
         subject=subject,
         recipients=recipients,

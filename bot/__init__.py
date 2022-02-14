@@ -4,24 +4,15 @@ from threading import Thread
 
 import telegram.ext
 from pytz import timezone
-from telegram import ParseMode, Bot
-from telegram.ext import Updater, Dispatcher, JobQueue, Defaults
+from telegram import Bot, ParseMode
+from telegram.ext import Defaults, Dispatcher, JobQueue, Updater
 
-from bot import callbacks
+from bot import jobs_callbacks
 from core import config
 from handlers.conversation_handlers import registration_conv
 from helpers import str_to_time
 
 settings = config.get_settings()
-
-
-def start(update, context):
-    context.bot.send_message(chat_id=update.effective_chat.id,
-                             text=f'Привет, {update.effective_chat.full_name}, '
-                                  'я буду присылать тебе уведомления о дежурстве в Я.П, '
-                                  f'твой telegram id *{update.effective_chat.id}*.', parse_mode=ParseMode.MARKDOWN)
-    logging.info(f'Добавился пользователь с именем {update.effective_chat.full_name}, '
-                 f'юзернеймом {update.effective_chat.username} и id {update.effective_chat.id}')
 
 
 def init_webhook(token, webhook_url, defaults: Defaults):
@@ -60,17 +51,17 @@ def init():
         dispatcher = init_polling(token, defaults)
 
     dispatcher.job_queue.run_daily(
-        callback=callbacks.morning_reminder_callback,
+        callback=jobs_callbacks.morning_reminder_callback,
         time=str_to_time(settings.morning_reminder_hour),
     )
 
     dispatcher.job_queue.run_daily(
-        callback=callbacks.evening_reminder_callback,
+        callback=jobs_callbacks.evening_reminder_callback,
         time=str_to_time(settings.evening_reminder_hour),
     )
 
     dispatcher.job_queue.run_daily(
-        callback=callbacks.continue_schedule,
+        callback=jobs_callbacks.continue_schedule_callback,
         time=str_to_time(settings.schedule_extension_time),
         days=settings.schedule_extension_weekdays,
     )
