@@ -9,7 +9,7 @@ from telegram import Bot, ParseMode
 from telegram.ext import (CallbackContext, Defaults, Dispatcher, JobQueue,
                           Updater)
 
-from app.notion import NotionServices
+from app.notion_services import NotionServices
 from app.services import CohortService, UserService
 from core import config
 from core.database import SessionLocal
