@@ -9,10 +9,10 @@ from telegram import Bot, ParseMode
 from telegram.ext import (CallbackContext, Defaults, Dispatcher, JobQueue,
                           Updater)
 
-from app.notion_services import NotionServices
 from app.services import CohortService, UserService
 from core import config
 from core.database import SessionLocal
+from core.services.notion_services import NotionServices
 from handlers.conversation_handlers import registration_conv
 
 settings = config.get_settings()

@@ -1,12 +1,15 @@
-from app.notion_client import NotionClient
 from core.models import Cohort
+from core.notion_integration import NotionClient
 from helpers import Expando
 
 
-class NotionServices(NotionClient):
+class NotionServices:
     """
     Services class, contains all functionality for receiving and processing data from Notion API
     """
+    def __init__(self):
+        self.client = NotionClient()
+
     def get_mentors_on_duty(self, cohorts: list[Cohort]) -> dict:
         """
         Returns a dict of all on-duty mentors and their cohorts for today.
@@ -14,7 +17,7 @@ class NotionServices(NotionClient):
         """
         mentors_on_duty = dict()
         for notion_database in cohorts:
-            response = self.get_cohort_schedule_from_notion(notion_database)
+            response = self.client.get_cohort_schedule_from_notion(notion_database)
 
             for item in response.results:
                 properties = item.properties
