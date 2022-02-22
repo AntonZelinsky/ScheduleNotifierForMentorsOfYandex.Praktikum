@@ -1,7 +1,6 @@
 import datetime
 import logging
 
-from dateutil.parser import parse
 from fastapi import BackgroundTasks
 from notion_client import APIResponseError, Client
 
@@ -37,7 +36,7 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
     users_raw_data = list()
     for notion_database in cohorts:
         try:
-            responseus = client.databases.query(
+            response = client.databases.query(
                 **{
                     "database_id": notion_database.notion_db_id,
                     "filter": {
@@ -48,7 +47,7 @@ def get_users_raw_data(cohorts: list[Cohort]) -> list:
                     },
                 }
             )
-            response = Objectify(responseus)
+            response = Objectify(response)
         except APIResponseError as e:
             raise ValueError(f'Notion fell: {e}')
 
@@ -125,10 +124,13 @@ def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
         return False
     last_duties = [duty.properties for duty in databases_duties]
     last_duties = sorted(last_duties, key=lambda duty: duty.Дата.date.start, reverse=True)
-    actual_date = parse(last_duties[0].Дата.date.start).date()
-    last_mentors_ids = tuple(duty.Дежурный.people[0].id for duty in last_duties)
+    actual_date = datetime.datetime.strptime(last_duties[0].Дата.date.start, '%Y-%m-%d').date()
+    last_mentors_ids = tuple(dict(
+        id=duty.Дежурный.people[0].id,
+        name=duty.Дежурный.people[0].name
+    ) for duty in last_duties)
     last_mentors = {
-        "last_mentors_ids": last_mentors_ids,
+        "last_mentors": last_mentors_ids,
         "actual_date": actual_date
     }
 
@@ -144,12 +146,10 @@ def find_cycle_by_last_duties(last_duties: tuple) -> tuple:
     :return: tuple. Вернуть **в прямом порядке.**
     """
     cycle = []
-    for i, mentor_id in enumerate(last_duties):
-        # TODO: возможно ли одним запросом получить юзеров в список, и в цикле уже его использовать?
-        user = user_service.get_user_by_notion_id(mentor_id)
-        if user in cycle:
+    for i, mentor in enumerate(last_duties):
+        if mentor in cycle:
             break
-        cycle.insert(i, user)
+        cycle.insert(i, mentor)
     return tuple(reversed(cycle))
 
 
@@ -163,7 +163,7 @@ def make_timeline(cycle: tuple, start_date: str, set_period: int) -> list:
     """
     future_duties = [None] * set_period
     duty_date = start_date
-    for i, v in enumerate(future_duties):
+    for i in range(set_period):
         duty_date += datetime.timedelta(days=1)
         future_duties[i] = (dict(mentor=cycle[i % len(cycle)], date=duty_date))
 
@@ -190,16 +190,16 @@ def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
                      f'Похоже, оно уже заполнено как минимум на {max_days} дней вперед.')
         return False
 
-    cycle = find_cycle_by_last_duties(last_duties['last_mentors_ids'])
+    cycle = find_cycle_by_last_duties(last_duties['last_mentors'])
     timeline = make_timeline(cycle, last_duties['actual_date'], need_days)
 
     added = []
     for duty in timeline:
         added_page_id = create_duty_page(DutyPageCreate(
             database_id=cohort.notion_db_id,
-            date=duty['date'].isoformat(),
-            mentor_name=duty['mentor'].name,
-            notion_user_id=duty['mentor'].notion_user_id,
+            date=duty['date'],
+            mentor_name=duty['mentor']['name'],
+            notion_user_id=duty['mentor']['id'],
         ))
         added.append(added_page_id)
     return added
