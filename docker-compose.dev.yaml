@@ -14,3 +14,15 @@ services:
       POSTGRES_USER:  root
       POSTGRES_PASSWORD:  root
       POSTGRES_DB: schedule_notifier
+
+  bot:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - 8888:8888
+    environment:
+      DATABASE_URL: postgresql://root:root@host.docker.internal:35432/schedule_notifier
+    env_file:
+      - .env
+    command: python run.py
