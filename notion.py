@@ -9,7 +9,7 @@ from app.services import UserService
 from core.config import get_settings
 from core.database import SessionLocal
 from core.models import Cohort
-from helpers import Expando, Objectify
+from helpers import Expando, Objectify, plural
 
 user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
 
@@ -85,8 +85,7 @@ def group_by_user_raw_data(raw_data: list) -> dict:
     users_group_data = {}
     for user_data in raw_data:
         if user_data.email in users_group_data:
-            users_group_data[user_data.email]['databases'] \
-                .append(user_data.database)
+            users_group_data[user_data.email]['databases'].append(user_data.database)
         else:
             user_dist_data = {
                 user_data.email: {
@@ -98,6 +97,43 @@ def group_by_user_raw_data(raw_data: list) -> dict:
             }
             users_group_data.update(user_dist_data)
     return users_group_data
+
+
+# TODO: Добавить обработку исключений
+def generate_schedule(cohort: Cohort, max_days: int = 14):
+    """
+    Генерировать расписание для когорты
+    :param cohort: когорта
+    :param max_days: кол-во дней добавляемых к расписанию,
+    :return: список добавленных ноушен страниц
+    """
+
+    last_duties = get_last_duties_by_cohort(cohort)
+    if not last_duties:
+        return False
+
+    need_days = datetime.date.today() + datetime.timedelta(days=max_days) - last_duties['actual_date']
+    need_days = need_days.days
+    if need_days < 1:
+        logging.info(f'Когорта "{cohort.name}" не нуждается в продлении расписания. '
+                     'Похоже, оно уже заполнено как минимум '
+                     f'на {max_days} {plural(max_days, ["день", "дня", "дней"])} вперед.')
+        return False
+
+    cycle = find_cycle_by_last_duties(last_duties['last_mentors'])
+    timeline = make_timeline(cycle, last_duties['actual_date'], need_days)
+
+    added = []
+    for duty in timeline:
+        added_page_id = create_duty_page(DutyPageCreate(
+            database_id=cohort.notion_db_id,
+            date=duty['date'],
+            mentor_name=duty['mentor']['name'],
+            notion_user_id=duty['mentor']['id'],
+        ))
+        added.append(added_page_id)
+
+    logging.info(f'В {cohort.name} продлено расписание на {len(added)} {plural(len(added), ["день", "дня", "дней"])}.')
 
 
 def get_last_duties_by_cohort(cohort: Cohort, count_days: int = 7) -> dict:
@@ -165,44 +201,10 @@ def make_timeline(cycle: tuple, start_date: str, set_period: int) -> list:
     duty_date = start_date
     for i in range(set_period):
         duty_date += datetime.timedelta(days=1)
-        future_duties[i] = (dict(mentor=cycle[i % len(cycle)], date=duty_date))
+        mentor = cycle[i % len(cycle)]
+        future_duties[i] = dict(mentor=mentor, date=duty_date)
 
     return future_duties
-
-
-# TODO: Добавить обработку исключений
-def add_duties_to_cohort(cohort: Cohort, max_days: int = 14):
-    """
-    Генерировать расписание для когорты
-    :param cohort: когорта
-    :param max_days: кол-во дней добавляемых к расписанию,
-    :return: список добавленных ноушен страниц
-    """
-
-    last_duties = get_last_duties_by_cohort(cohort)
-    if not last_duties:
-        return False
-
-    need_days = datetime.date.today() + datetime.timedelta(days=max_days) - last_duties['actual_date']
-    need_days = need_days.days
-    if need_days < 1:
-        logging.info(f'Когорта "{cohort.name}" не нуждается в продлении расписания. '
-                     f'Похоже, оно уже заполнено как минимум на {max_days} дней вперед.')
-        return False
-
-    cycle = find_cycle_by_last_duties(last_duties['last_mentors'])
-    timeline = make_timeline(cycle, last_duties['actual_date'], need_days)
-
-    added = []
-    for duty in timeline:
-        added_page_id = create_duty_page(DutyPageCreate(
-            database_id=cohort.notion_db_id,
-            date=duty['date'],
-            mentor_name=duty['mentor']['name'],
-            notion_user_id=duty['mentor']['id'],
-        ))
-        added.append(added_page_id)
-    return added
 
 
 def create_duty_page(duty_page: DutyPageCreate) -> int:

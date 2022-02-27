@@ -4,6 +4,7 @@ from fastapi import Depends
 from fastapi_utils.cbv import cbv
 from fastapi_utils.inferring_router import InferringRouter
 
+import notion
 from app.services import CohortService
 
 from .. import schemas

@@ -18,3 +18,19 @@ class Expando(object):
 
 def str_to_time(str_time):
     return datetime.datetime.strptime(str_time, '%H:%M').time()
+
+
+def plural(count: int, forms: list) -> str:
+    """
+    Возвращает строку со склоненным словом
+    :param count: число для склонения
+    :param forms: формы слова. [день, дня, дней]
+    :return:
+    """
+    if count % 100 in (11, 12, 13, 14):
+        return forms[2]
+    if count % 10 == 1:
+        return forms[0]
+    if count % 10 in (2, 3, 4):
+        return forms[1]
+    return forms[2]

@@ -48,6 +48,4 @@ def continue_schedule_callback(context: CallbackContext):
     max_days = settings.schedule_extension_max_days
     cohorts = cohort_service.get_cohorts()
     for cohort in cohorts:
-        added_duties = notion.add_duties_to_cohort(cohort, max_days=max_days)
-        if added_duties:
-            logging.info(f'В {cohort.name} продлено расписание.')
+        notion.generate_schedule(cohort, max_days=max_days)

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
@@ -62,7 +63,8 @@ class Registration(RegistrationBase):
         orm_mode = True
 
 
-class DutyPageCreate(BaseModel):
+@dataclass
+class DutyPageCreate:
     database_id: UUID
     date: date
     mentor_name: str
