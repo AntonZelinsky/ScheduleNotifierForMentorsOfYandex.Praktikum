@@ -11,12 +11,12 @@ from helpers import Objectify
 
 settings = config.get_settings()
 cohort_service: CohortService = CohortService(BackgroundTasks(), SessionLocal())
-notion_services = NotionServices()
+notion_service: NotionServices = NotionServices()
 
 
 def morning_reminder_callback(context: CallbackContext):
     cohorts = cohort_service.get_cohorts()
-    users = notion_services.get_users_data(cohorts)
+    users = notion_service.get_mentors_on_duty(cohorts)
 
     for user_data in users.values():
         user = Objectify(user_data)
@@ -33,7 +33,7 @@ def morning_reminder_callback(context: CallbackContext):
 
 def evening_reminder_callback(context: CallbackContext):
     cohorts = cohort_service.get_cohorts()
-    users = notion_services.get_users_data(cohorts)
+    users = notion_service.get_mentors_on_duty(cohorts)
 
     for user_data in users.values():
         user = Objectify(user_data)
@@ -49,4 +49,4 @@ def continue_schedule_callback(context: CallbackContext):
     max_days = settings.schedule_extension_max_days
     cohorts = cohort_service.get_cohorts()
     for cohort in cohorts:
-        notion_services.generate_schedule(cohort, max_days=max_days)
+        notion_service.generate_schedule(cohort, max_days=max_days)

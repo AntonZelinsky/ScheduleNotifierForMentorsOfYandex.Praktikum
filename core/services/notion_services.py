@@ -35,32 +35,6 @@ class NotionServices:
 
         return mentors_on_duty
 
-    def get_users_data(self, cohorts: list[Cohort]) -> dict:
-        raw_data = self.client.get_users_raw_data(cohorts)
-        users_data = self.group_by_user_raw_data(raw_data)
-        return users_data
-
-    def group_by_user_raw_data(self, raw_data: list) -> dict:
-        """
-        Сгруппировать всех дежурных по юзерам,
-        т.к. один юзер может дежурить в нескольких когортах.
-        """
-        users_group_data = {}
-        for user_data in raw_data:
-            if user_data.email in users_group_data:
-                users_group_data[user_data.email]['databases'].append(user_data.database)
-            else:
-                user_dist_data = {
-                    user_data.email: {
-                        'name': user_data.name,
-                        'email': user_data.email,
-                        'telegram_id': user_data.telegram_id,
-                        'databases': [user_data.database]
-                    }
-                }
-                users_group_data.update(user_dist_data)
-        return users_group_data
-
     def generate_schedule(self, cohort: Cohort, max_days: int = 14):
         """
         Генерировать расписание для когорты
