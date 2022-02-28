@@ -40,6 +40,9 @@ class BaseConfig(BaseSettings):
     domain_address: str = None
     port: int = 80
     sqlalchemy_database_url: str
+    db_user: str
+    db_password: str
+    db_name: str
 
     @staticmethod
     def email_conf():

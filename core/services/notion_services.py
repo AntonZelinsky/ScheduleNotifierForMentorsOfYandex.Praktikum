@@ -7,8 +7,7 @@ class NotionServices:
     """
     Services class, contains all functionality for receiving and processing data from Notion API
     """
-    def __init__(self):
-        self.client = NotionClient()
+    client = NotionClient()
 
     def get_mentors_on_duty(self, cohorts: list[Cohort]) -> dict:
         """

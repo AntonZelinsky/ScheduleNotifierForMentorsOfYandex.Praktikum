@@ -1,5 +1,21 @@
 # Квик старт
 
+- Клонируем проект
+```bash
+$ git clone git@github.com:AntonZelinsky/ScheduleNotifierForMentorsOfYandex.Praktikum.git
+$ cd ScheduleNotifierForMentorsOfYandex.Praktikum
+```
+- Запускаем проект в контейнерах\
+Для этого убедитесь, что на вашем устройстве установлен и запущен [Docker](https://www.docker.com/get-started).
+После чего, из корневой директории проекта выполните команду
+```bash
+$ docker-compose -f docker-compose.dev.yaml up -d
+```
+**Важно**\
+_Для корректной работы контейнеров bot и postgres, используйте адрес host.docker.internal для БД (не localhost)_
+
+# Квик старт (старая версия)
+
 ```bash
 $ git clone git@github.com:AntonZelinsky/ScheduleNotifierForMentorsOfYandex.Praktikum.git
 $ cd ScheduleNotifierForMentorsOfYandex.Praktikum
