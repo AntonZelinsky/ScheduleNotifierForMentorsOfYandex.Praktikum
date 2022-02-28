@@ -5,7 +5,7 @@ from telegram import Update
 
 import bot
 
-from .api import router
+from app.api import router
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 

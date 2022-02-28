@@ -2,17 +2,18 @@ import logging
 from queue import Queue
 from threading import Thread
 
-import telegram.ext
 from pytz import timezone
-from telegram import Bot, ParseMode
+from telegram import Bot
 from telegram.ext import Defaults, Dispatcher, JobQueue, Updater
 
 from bot import jobs_callbacks
 from core import config
+from core.services.notion_services import NotionServices
 from handlers.conversation_handlers import registration_conv
 from helpers import str_to_time
 
 settings = config.get_settings()
+notion = NotionServices()
 
 
 def init_webhook(token, webhook_url, defaults: Defaults):
@@ -43,7 +44,7 @@ def init_polling(token, defaults: Defaults):
 def init():
     token = settings.telegram_token
 
-    defaults = telegram.ext.Defaults(tzinfo=timezone(settings.timezone))
+    defaults = Defaults(tzinfo=timezone(settings.timezone))
     if settings.domain_address:
         webhook_url = f'{settings.domain_address}/{token}/telegramWebhook'
         dispatcher = init_webhook(token, webhook_url, defaults)
