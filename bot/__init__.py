@@ -2,17 +2,19 @@ import logging
 from queue import Queue
 from threading import Thread
 
-import telegram.ext
+import telegram
 from pytz import timezone
-from telegram import Bot, ParseMode
-from telegram.ext import Defaults, Dispatcher, JobQueue, Updater
+from telegram import Bot
+from telegram.ext import CallbackContext, Defaults, Dispatcher, JobQueue, Updater
 
 from bot import jobs_callbacks
 from core import config
+from core.services.notion_services import NotionServices
 from handlers.conversation_handlers import registration_conv
 from helpers import str_to_time
 
 settings = config.get_settings()
+notion = NotionServices()
 
 
 def init_webhook(token, webhook_url, defaults: Defaults):

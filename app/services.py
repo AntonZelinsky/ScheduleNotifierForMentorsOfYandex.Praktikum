@@ -1,6 +1,7 @@
 from uuid import UUID
 
 from fastapi import BackgroundTasks, Depends, HTTPException
+from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from core import models
@@ -8,7 +9,7 @@ from core.config import get_settings
 from core.database import get_db
 from core.mail import send_email
 
-from . import schemas
+from app import schemas
 
 settings = get_settings()
 
@@ -26,6 +27,9 @@ class UserService(Services):
     def has_user_by_telegram_id(self, telegram_id: int) -> bool:
         return not self.db.query(models.User).filter(
             models.User.telegram_id == telegram_id).first() is None
+
+    def get_user_by_email(self, email: EmailStr):
+        return self.db.query(models.User).filter(models.User.email == email).first()
 
     def get_users(self, skip: int = 0, limit: int = 100):
         return self.db.query(models.User).offset(skip).limit(limit).all()

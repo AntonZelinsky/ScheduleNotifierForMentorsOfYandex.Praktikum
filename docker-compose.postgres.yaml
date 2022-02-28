@@ -14,12 +14,3 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-
-  bot:
-    build: .
-    depends_on:
-      - db
-    ports:
-      - 8888:8888
-    environment:
-      DATABASE_URL: ${SQLALCHEMY_DATABASE_URL}

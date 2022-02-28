@@ -14,5 +14,5 @@ if __name__ == "__main__":
     service: CohortService = CohortService(SessionLocal())
     cohorts = service.get_cohorts()
 
-    user_data = notion.get_users_data(cohorts)
+    user_data = notion.get_mentors_on_duty(cohorts)
     pass

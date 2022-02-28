@@ -3,19 +3,19 @@ import logging
 from fastapi import BackgroundTasks
 from telegram.ext import CallbackContext
 
-import notion
 from app.services import CohortService
 from core import config
 from core.database import SessionLocal
+from core.services.notion_services import NotionServices
 from helpers import Objectify
 
 settings = config.get_settings()
 cohort_service: CohortService = CohortService(BackgroundTasks(), SessionLocal())
-
+notion_service: NotionServices = NotionServices()
 
 def morning_reminder_callback(context: CallbackContext):
     cohorts = cohort_service.get_cohorts()
-    users = notion.get_users_data(cohorts)
+    users = notion_service.get_mentors_on_duty(cohorts)
 
     for user_data in users.values():
         user = Objectify(user_data)
@@ -32,7 +32,7 @@ def morning_reminder_callback(context: CallbackContext):
 
 def evening_reminder_callback(context: CallbackContext):
     cohorts = cohort_service.get_cohorts()
-    users = notion.get_users_data(cohorts)
+    users = notion_service.get_mentors_on_duty(cohorts)
 
     for user_data in users.values():
         user = Objectify(user_data)
@@ -48,6 +48,6 @@ def continue_schedule_callback(context: CallbackContext):
     max_days = settings.schedule_extension_max_days
     cohorts = cohort_service.get_cohorts()
     for cohort in cohorts:
-        added_duties = notion.add_duties_to_cohort(cohort, max_days=max_days)
+        added_duties = notion_service.add_duties_to_cohort(cohort, max_days=max_days)
         if added_duties:
             logging.info(f'В {cohort.name} продлено расписание.')
