@@ -13,15 +13,13 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 def create_app() -> FastAPI:
     application = FastAPI()
     application.include_router(router)
+
+    dispatcher = bot.init()
+
+    @application.post('/{token}/telegramWebhook')
+    def webhook(data: dict):
+        update = Update.de_json(data, dispatcher.bot)
+        dispatcher.process_update(update)
+
     return application
 
-
-app = create_app()
-
-dispatcher = bot.init()
-
-
-@app.post('/{token}/telegramWebhook')
-def webhook(data: dict):
-    update = Update.de_json(data, dispatcher.bot)
-    dispatcher.process_update(update)

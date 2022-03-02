@@ -5,4 +5,4 @@ dotenv.load_dotenv()
 from app import main
 
 if __name__ == "__main__":
-    uvicorn.run(main.app, host='127.0.0.1', port=8888)
+    uvicorn.run(main.create_app(), host='0.0.0.0', port=8888)
