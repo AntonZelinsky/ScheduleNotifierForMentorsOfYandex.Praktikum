@@ -7,6 +7,11 @@ from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 from core.models import User
 from handlers import commands, states
 
+from app.services import UserService
+from fastapi import BackgroundTasks
+from core.database import SessionLocal
+user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
+
 # Variables for user data
 EMAIL = "email"
 USERNAME = "username"
@@ -88,6 +93,11 @@ def confirmation_sent(update, context):
     else:
         email_address = context.user_data[EMAIL]
         # TODO: здесь будем создавать новую запись в таблице Registrations и отправлять письмо
+    user_service.create_registration(dict(
+        telegram_id=context.user_data[TELEGRAM_ID],
+        name=update.effective_chat.full_name,
+        email=email_address,
+    ))
     buttons = [
         [InlineKeyboardButton(text="Отправить повторно", callback_data=commands.RESEND_CONF_LINK)],
         [InlineKeyboardButton(text="Изменить почту", callback_data=commands.UPDATE_EMAIL)],
