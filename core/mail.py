@@ -1,3 +1,4 @@
+import logging
 from fastapi import BackgroundTasks
 from fastapi_mail import FastMail, MessageSchema
 
@@ -19,6 +20,7 @@ def send_email(
         template_body=template_body,
         subtype='html',
     )
+    logging.info(f"Отправляем. recipients:{recipients}, subject:{subject}, template_body:{template_body}")
     fm = FastMail(settings.email_conf())
 
     background_tasks.add_task(
