@@ -20,9 +20,8 @@ def send_email(
         template_body=template_body,
         subtype='html',
     )
-    logging.info(f"Отправляем. recipients:{recipients}, subject:{subject}, template_body:{template_body}")
     fm = FastMail(settings.email_conf())
-
+    logging.info(f"TMP. Отправляем. recipients:{recipients}, subject:{subject}, template_body:{template_body}")
     background_tasks.add_task(
         fm.send_message,
         message, template_name=template_html,
