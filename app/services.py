@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import BackgroundTasks, Depends, HTTPException
@@ -71,6 +72,7 @@ class UserService(Services):
             link=f'https://{settings.domain_address}?'
                  f'start={registration.confirmation_code}'
         )
+        logging.info(f"Отправляем. recipients:{email}, subject:{subject}, template_body:{template_body}")
         send_email(
             self.background_tasks,
             recipients=[email],
