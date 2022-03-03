@@ -10,6 +10,7 @@ from handlers import commands, states
 from app.services import UserService
 from fastapi import BackgroundTasks
 from core.database import SessionLocal
+from app.schemas import RegistrationBase
 user_service: UserService = UserService(BackgroundTasks(), SessionLocal())
 
 # Variables for user data
@@ -93,7 +94,7 @@ def confirmation_sent(update, context):
     else:
         email_address = context.user_data[EMAIL]
         # TODO: здесь будем создавать новую запись в таблице Registrations и отправлять письмо
-    user_service.create_registration(dict(
+    user_service.create_registration(RegistrationBase(
         telegram_id=context.user_data[TELEGRAM_ID],
         name=update.effective_chat.full_name,
         email=email_address,
