@@ -6,8 +6,10 @@ from fastapi_utils.inferring_router import InferringRouter
 
 from app import schemas
 from app.services import CohortService
+from core.services.notion_services import NotionServices
 
 router = InferringRouter()
+notion_services = NotionServices()
 
 
 @cbv(router)

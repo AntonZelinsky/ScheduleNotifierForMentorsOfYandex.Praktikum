@@ -40,6 +40,10 @@ class BaseConfig(BaseSettings):
     domain_address: str = None
     port: int = 80
     sqlalchemy_database_url: str
+    schedule_extension_max_days: int = 14
+    schedule_extension_time: str = '21:21'
+    schedule_extension_weekdays: tuple = (6,)  # воскресенье
+    timezone: str = 'Europe/Warsaw'
     db_user: str
     db_password: str
     db_name: str
