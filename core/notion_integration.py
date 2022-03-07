@@ -42,36 +42,31 @@ class NotionClient:
             raise ValueError(f'Ошибка при попытке обращения к Notion API: {e}')
 
     def create_duty_page(self, duty_page: DutyPageCreate) -> int:
+        properties = {
+            "Дата": {
+                "date": {
+                    "start": str(duty_page.date),
+                    "end": None
+                }
+            },
+            "Name": {
+                "title": [
+                    {
+                        "text": {
+                            "content": duty_page.mentor_name
+                        }
+                    }
+                ]
+            }
+        }
+        if duty_page.notion_user_id is not None:
+            properties['Дежурный'] = {"people": [{"object": "user", "id": str(duty_page.notion_user_id)}]}
         response = self.client.pages.create(
             **{
                 "parent": {
                     "database_id": str(duty_page.database_id)
                 },
-                "properties": {
-                    "Дата": {
-                        "date": {
-                            "start": str(duty_page.date),
-                            "end": None
-                        }
-                    },
-                    "Name": {
-                        "title": [
-                            {
-                                "text": {
-                                    "content": duty_page.mentor_name
-                                }
-                            }
-                        ]
-                    },
-                    "Дежурный": {
-                        "people": [
-                            {
-                                "object": "user",
-                                "id": str(duty_page.notion_user_id)
-                            }
-                        ]
-                    }
-                },
+                "properties": properties,
                 "children": [
                     {
                         "object": "block",

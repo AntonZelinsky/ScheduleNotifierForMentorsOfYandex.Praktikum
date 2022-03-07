@@ -96,12 +96,22 @@ class NotionServices:
         last_duties = [duty.properties for duty in databases_duties]
         last_duties = sorted(last_duties, key=lambda duty: duty.Дата.date.start, reverse=True)
         actual_date = datetime.datetime.strptime(last_duties[0].Дата.date.start, '%Y-%m-%d').date()
-        last_mentors_ids = tuple(dict(
-            id=duty.Дежурный.people[0].id,
-            name=duty.Дежурный.people[0].name
-        ) for duty in last_duties)
+
+        last_mentors_ids = []
+        for duty in last_duties:
+            if len(duty.Дежурный.people) > 0:
+                id = duty.Дежурный.people[0].id
+                name = duty.Дежурный.people[0].name
+            elif len(duty.Name.title) > 0:
+                id = None
+                name = duty.Name.title[0].plain_text
+            else:
+                id = None
+                name = '¯\\_(ツ)_/¯'
+            last_mentors_ids.append(dict(id=id, name=name))
+
         last_mentors = {
-            "last_mentors": last_mentors_ids,
+            "last_mentors": tuple(last_mentors_ids),
             "actual_date": actual_date
         }
 
