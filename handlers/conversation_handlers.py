@@ -5,6 +5,8 @@ from telegram.ext import CallbackQueryHandler, ConversationHandler, CommandHandl
 from telegram.inline.inlinekeyboardmarkup import InlineKeyboardMarkup
 
 from core.models import User
+from app.services import UserService
+from core.smtp_mail import send_email_confirmation
 from handlers import commands, states
 
 # Variables for user data
@@ -87,7 +89,6 @@ def confirmation_sent(update, context):
         email_address = update.message.text
     else:
         email_address = context.user_data[EMAIL]
-        # TODO: здесь будем создавать новую запись в таблице Registrations и отправлять письмо
     buttons = [
         [InlineKeyboardButton(text="Отправить повторно", callback_data=commands.RESEND_CONF_LINK)],
         [InlineKeyboardButton(text="Изменить почту", callback_data=commands.UPDATE_EMAIL)],
@@ -101,8 +102,9 @@ def confirmation_sent(update, context):
         ),
         reply_markup=keyboard,
     )
+    # TODO: требуется переделка сервиса по отправке письма
+    send_email_confirmation(email_address)
     context.user_data[EMAIL] = email_address
-    logging.info(f"Отправили подтверждение пользователю ID {context.user_data[TELEGRAM_ID]} на почту {email_address}")
     return states.WAITING_CONFIRM
 
 
